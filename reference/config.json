@@ -1,0 +1,98 @@
+{
+  "name": "COMMAX Wallpad Addon by ew11-mqtt",
+  "version": "1.6.11",
+  "slug": "commax",
+  "url": "https://github.com/wooooooooooook/HAaddons",
+  "description": "mqtt 통신을 활용한 코맥스 월패드 컨트롤러",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "map": [
+    "share:rw"
+  ],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "hassio_api": true,
+  "auth_api": true,
+  "homeassistant_api": true,
+  "options": {
+    "vendor": "commax",
+    "mqtt_TOPIC": "commax",
+    "elfin_TOPIC": "ew11",
+    "log":{
+      "DEBUG": false, 
+      "mqtt_log": false,
+      "elfin_log": false
+    },
+    "command_settings":{
+      "queue_interval_in_second": "0.1",
+      "max_send_count" : 15,
+      "min_receive_count" : 1,
+      "send_command_on_idle" : true
+    },
+    "climate_settings":{
+      "min_temp": 5,
+      "max_temp": 40
+    },
+    "mqtt":{
+      "✅leave_belows_empty_to_use_default_mqtt_broker": "",
+      "mqtt_server": "192.168.50.192",
+      "mqtt_port": 1883,
+      "mqtt_id": "hyeonpyo",
+      "mqtt_password": "J7QNgG6ta4%3OC,+U"
+    },
+    "elfin":{
+      "use_auto_reboot": true,
+      "elfin_unavailable_notification": false,
+      "✅fill_belows_to_use_auto_reboot": "",
+      "elfin_server": "192.168.0.38",
+      "elfin_id": "admin",
+      "elfin_password": "admin",
+      "elfin_reboot_interval": 60
+    }
+  },
+  "schema": {
+    "vendor": "list(commax|custom)",
+    "mqtt_TOPIC": "str",
+    "elfin_TOPIC": "str",
+    "log":{
+      "DEBUG": "bool",
+      "mqtt_log": "bool",
+      "elfin_log": "bool"
+    },
+    "command_settings":{
+      "queue_interval_in_second": "float(0.01,1.0)",
+      "max_send_count": "int(1,99)",
+      "min_receive_count": "int(1,9)",
+      "send_command_on_idle" : "bool"
+    },
+    "climate_settings":{
+      "min_temp": "int(0,19)",
+      "max_temp": "int(20,99)"
+    },
+    "mqtt":{
+      "✅leave_belows_empty_to_use_default_mqtt_broker": "str?",
+      "mqtt_server": "str?",
+      "mqtt_port": "int?",
+      "mqtt_id": "str?",
+      "mqtt_password": "str?"
+    },
+    "elfin":{
+      "use_auto_reboot": "bool",
+      "elfin_unavailable_notification": "bool",
+      "✅fill_belows_to_use_auto_reboot": "str?",
+      "elfin_server": "str?",
+      "elfin_id": "str?",
+      "elfin_password": "str?",
+      "elfin_reboot_interval": "int"
+    }
+  },
+  "ingress": true,
+  "ingress_port": 8099,
+  "ports": {
+    "8099/tcp": null
+  },
+  "panel_icon": "mdi:home-heart",
+  "services": [
+    "mqtt:need"
+  ]
+}
