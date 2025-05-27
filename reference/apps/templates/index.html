@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Commax Wallpad Controller</title>
+    <meta charset="utf-8">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'media'
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900">
+    <!-- 네비게이션 바 -->
+    <nav class="bg-white dark:bg-gray-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-xl font-bold dark:text-white">Commax Wallpad Controller</span>
+                    </div>
+                    <!-- 데스크톱 메뉴 -->
+                    <div class="hidden lg:ml-6 lg:flex lg:space-x-8">
+                        <a href="#" onclick="showPage('dashboard')" class="border-indigo-500 text-gray-900 dark:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">대시보드</a>
+                        <a href="#" onclick="showPage('settings')" class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">설정</a>
+                        <a href="#" onclick="showPage('live_packets')" class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">실시간 패킷</a>
+                        <a href="#" onclick="showPage('playground')" class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">플레이그라운드</a>
+                        <a href="#" onclick="showPage('packet_reference')" class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">패킷 참조자료</a>
+                        <a href="#" onclick="showPage('custom_packet')" class="border-transparent text-gray-500 dark:text-gray-300 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">패킷 구조 편집</a>
+                    </div>
+                </div>
+                <!-- 모바일 메뉴 버튼 -->
+                <div class="lg:hidden flex items-center">
+                    <button type="button" onclick="toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 모바일 메뉴 드롭다운 -->
+        <div id="mobileMenu" class="hidden lg:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#" onclick="showPage('dashboard'); toggleMobileMenu()" class="bg-indigo-50 dark:bg-indigo-900 border-indigo-500 text-indigo-700 dark:text-indigo-200 block pl-3 pr-4 py-2 border-l-4 text-base font-medium">대시보드</a>
+                <a href="#" onclick="showPage('settings'); toggleMobileMenu()" class="border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">설정</a>
+                <a href="#" onclick="showPage('live_packets'); toggleMobileMenu()" class="border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">실시간 패킷</a>
+                <a href="#" onclick="showPage('playground'); toggleMobileMenu()" class="border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">플레이그라운드</a>
+                <a href="#" onclick="showPage('packet_reference'); toggleMobileMenu()" class="border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">패킷 참조자료</a>
+                <a href="#" onclick="showPage('custom_packet'); toggleMobileMenu()" class="border-transparent text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 hover:text-gray-700 dark:hover:text-white block pl-3 pr-4 py-2 border-l-4 text-base font-medium">패킷 구조 편집</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <div class="max-w-full mx-auto px-2 sm:px-4 lg:px-4 py-4">
+        <!-- 대시보드 페이지 -->
+        <div id="dashboard" class="page">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- 연결 상태 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4 dark:text-white">연결 상태</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="dark:text-gray-300">EW11 연결:</span>
+                            <span id="ew11ConnectionStatus" class="px-2 py-1 rounded text-sm dark:text-gray-300">확인중...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="dark:text-gray-300">MQTT 연결:</span>
+                            <span id="connectionStatus" class="px-2 py-1 rounded text-sm dark:text-gray-300">연결 중...</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="dark:text-gray-300 text-sm">MQTT 브로커:</span>
+                            <span id="brokerInfo" class="dark:text-gray-300 text-sm">-</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="dark:text-gray-300 text-sm">MQTT 클라이언트 ID:</span>
+                            <span id="clientId" class="dark:text-gray-300 text-sm">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 청취 중인 채널 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4 dark:text-white">청취 중인 채널</h2>
+                    <div id="subscribedTopicsWithMessages" class="space-y-2">
+                        <!-- 채널별 최신 메시지가 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+                
+                <!-- 연결된 기기 -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold dark:text-white">현재 연결된 기기</h2>
+                        <button id="refreshDevicesButton" class="bg-blue-500 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white font-bold py-1 px-3 rounded flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+                            </svg>
+                            다시검색
+                        </button>
+                    </div>
+                    <div id="deviceList" class="min-h-[100px]">
+                        <!-- 기기 목록이 여기에 동적으로 추가됩니다 -->
+                        <div id="noDeviceMessage" class="text-center py-8 text-gray-500">
+                            <p>기기를 검색중입니다...</p>
+                            <p class="text-sm mt-2">1분 이상 기기가 검색되지 않는 경우 애드온 로그를 확인해주세요.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 설정 페이지 -->
+        <div id="settings" class="page hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold mb-4 dark:text-white">애드온 설정</h2>
+                <div id="configForm" class="space-y-4">
+                    <!-- CONFIG 객체 내용이 여기에 동적으로 추가됩니다 -->
+                </div>
+                <div class="mt-6 flex items-center justify-between gap-4">
+                    <span id="configMessage" class="text-sm text-gray-600 dark:text-gray-400">설정을 변경하고 저장해도 변경되지 않는다면 허용되지 않는 설정값일 수 있습니다.</span>
+                    <button id="saveConfig" class="bg-blue-500 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white font-bold py-2 px-4 rounded">
+                        저장
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 실시간 패킷 페이지 -->
+        <div id="live_packets" class="page hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold dark:text-white">실시간 패킷</h2>
+                    <div class="flex gap-2">
+                        <button id="pauseButton" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">
+                            일시정지
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 dark:text-white">송신 패킷</h3>
+                        <pre id="send-data" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg h-[calc(100vh-300px)] overflow-auto font-mono text-sm dark:text-gray-300"></pre>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2 dark:text-white">수신 패킷</h3>
+                        <pre id="recv-data" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg h-[calc(100vh-300px)] overflow-auto font-mono text-sm dark:text-gray-300"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 플레이그라운드 페이지 -->
+        <div id="playground" class="page hidden">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <!-- 패킷 로그 -->
+                <div class="md:col-span-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-semibold dark:text-white">감지된 패킷 목록</h2>
+                            <div class="flex items-center gap-4">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="hideUnknown" onchange="updatePacketLogDisplay()" class="form-checkbox h-4 w-4 text-indigo-600 dark:text-indigo-400">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Unknown 패킷 숨기기</span>
+                                </label>
+                                <button id="packetLogClearButton" class="text-gray-500 hover:text-red-500 transition-colors" title="패킷 목록 초기화">
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="packetLog" class="h-[calc(100vh-300px)] overflow-y-auto">
+                            <!-- 패킷 로그가 여기에 동적으로 추가됩니다 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 패킷 분석기 -->
+                <div class="md:col-span-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h2 class="text-lg font-semibold mb-4 dark:text-white">패킷 분석기</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">* 패킷은 7바이트(14자리)로 입력하세요. 체크섬은 자동으로 계산됩니다.</p>
+                        <div class="flex gap-2 mb-2">
+                            <div class="flex-grow">
+                                <input type="text" id="analyzerPacketInput" placeholder="패킷 입력 (예: F7010104000000)" class="form-input block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded shadow focus:outline-none focus:shadow-outline">
+                            </div>
+                            <button id="analyzePacketButton" class="bg-blue-500 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white font-bold py-2 px-4 rounded">
+                                분석
+                            </button>
+                        </div>
+                        <div id="packetResult" class="mt-4">
+                            <!-- 분석 결과가 여기에 표시됩니다 -->
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <button id="sendPacketButton" class="w-full bg-green-500 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                                현재 패킷 전송
+                            </button>
+                            <p id="sendPacketWarning" class="text-sm text-red-500 dark:text-red-400 mt-2">
+                                ⚠️ 패킷 전송은 현재 입력된 패킷을 그대로 전송하며, 유효성 검증을 거치지 않습니다.<br>
+                                알 수 없는 패킷을 전송하는 경우 예상하지 못한 동작이 있을 수 있습니다.<br>
+                                명령 패킷이 원하는 동작이 되지 않는다면 여러 번 전송을 시도해 보세요.<br>
+                                전송된 패킷은 상태패킷으로도 해석됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 패킷 참조자료 -->
+        <div id="packet_reference" class="page hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold mb-4 dark:text-white">📚 패킷 참조 자료</h2>
+                <div>
+                    <div id="deviceTabs" class="flex border-b border-gray-200 overflow-x-auto">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <div id="referenceTabContents" class="mt-4 min-w-[640px]">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 패킷 구조 편집 -->
+        <div id="custom_packet" class="page hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold mb-4 dark:text-white">커스텀 패킷 구조 편집</h2>
+                <div id="vendorWarning" class="hidden mb-4 p-4 bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 text-yellow-700 dark:text-yellow-200">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm">현재 vendor 설정이 'commax'로 되어있어 패킷 구조 변경이 적용되지 않습니다.</p>
+                            <button id="changeVendorButton" class="mt-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-semibold py-1 px-3 rounded text-sm">
+                                vendor를 'custom'으로 변경
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">월패드 패킷 구조의 header와 name, values 필드를 편집할 수 있습니다.</p>
+
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <div id="customPacketDeviceTabs" class="flex overflow-x-auto">
+                        <!-- 탭 버튼이 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+
+                <div id="customPacketTabContents" class="mt-4">
+                    <!-- 기기별 편집 UI가 여기에 동적으로 추가됩니다 -->
+                </div>
+
+                <div class="mt-6 flex justify-end items-center">
+                    <div class="space-x-2">
+                        <button id="savePacketStructure" class="bg-blue-500 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-800 text-white font-bold py-2 px-4 rounded">
+                            저장
+                        </button>
+                        <button id="resetPacketStructure" class="bg-red-500 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            초기화
+                        </button>
+                    </div>
+                    <span id="packetEditorMessage" class="ml-3"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+        {% include 'dashboard.js' %}
+        {% include 'config.js' %}
+        {% include 'packet_analyzer.js' %}
+        {% include 'packet_log.js' %}
+        {% include 'packet_reference.js' %}
+        {% include 'custom_packet_structure.js' %}
+        {% include 'script.js' %}
+    </script>
+</body>
+</html>
