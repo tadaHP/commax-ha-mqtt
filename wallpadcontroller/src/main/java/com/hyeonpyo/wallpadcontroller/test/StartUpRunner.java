@@ -5,7 +5,7 @@ import java.util.Map;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-import com.hyeonpyo.wallpadcontroller.loader.DeviceStructureLoader;
+import com.hyeonpyo.wallpadcontroller.parser.DeviceStructureLoader;
 
 import lombok.RequiredArgsConstructor;
 
