@@ -10,7 +10,7 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.stereotype.Service;
 
 import com.hyeonpyo.wallpadcontroller.parser.PacketParser;
-import com.hyeonpyo.wallpadcontroller.parser.type.ParsedPacketDto;
+import com.hyeonpyo.wallpadcontroller.parser.commax.type.ParsedPacket;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PostConstruct;
@@ -24,6 +24,7 @@ public class MqttService implements MqttCallback {
 
     private final MqttProperties mqttProperties;
     private final String EW11_TOPIC = "ew11/#";
+    // private final PacketParser packetParser;
     private final PacketParser packetParser;
 
     private MqttClient mqttClient;
@@ -93,7 +94,12 @@ public class MqttService implements MqttCallback {
         String hex = hexWithSpaces.replace(" ", "");
 
         log.info("📩 MQTT 수신: {} → HEX: {}", topic, hexWithSpaces);
-        packetParser.parse(hex);
+        ParsedPacket result = packetParser.parse(hex);
+        if (result != null) {
+            log.info("장치: {}", result.getDeviceName());
+            log.info("종류: {}", result.getKind());
+            result.getParsedFields().forEach((k, v) -> log.info("  {} = {}", k, v));
+        }
     }
 
     @Override

@@ -1,10 +1,14 @@
 package com.hyeonpyo.wallpadcontroller.parser;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
+
+import com.hyeonpyo.wallpadcontroller.parser.commax.type.PacketKind;
+import com.hyeonpyo.wallpadcontroller.parser.commax.type.ParsedPacket;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,7 +56,7 @@ public class PacketParser {
         }
     }
 
-    public void parse(String hexString) {
+    public ParsedPacket parse(String hexString) {
         byte[] bytes = hexStringToByteArray(hexString);
         String header = String.format("%02X", bytes[0]);
 
@@ -65,22 +69,28 @@ public class PacketParser {
                 Map<String, Object> packet = cast(device.get(type));
                 String expectedHeader = (String) packet.get("header");
                 if (expectedHeader.equalsIgnoreCase(header)) {
-                    log.info("✅ [{}] [{}] 패킷 분석 시작", deviceName, type);
+                    log.debug("✅ [{}] [{}] 패킷 분석 시작", deviceName, type);
                     Map<String, Object> structure = cast(packet.get("structure"));
+                    Map<String, String> parsedFields = new LinkedHashMap<>();
+
                     for (int i = 1; i < bytes.length && i <= 7; i++) {
                         String key = String.valueOf(i);
                         if (!structure.containsKey(key)) continue;
                         Map<String, Object> field = cast(structure.get(key));
                         String name = (String) field.get("name");
                         String value = String.format("%02X", bytes[i]);
-                        log.info("  {}: {}", name, value);
+                        if (!"empty".equals(name)) {
+                            parsedFields.put(name, value);
+                        }
                     }
-                    return;
+
+                    return new ParsedPacket(deviceName, PacketKind.fromKey(type), parsedFields);
                 }
             }
         }
 
         log.warn("❓ 알 수 없는 헤더: {}", header);
+        return null;
     }
 
     private byte[] hexStringToByteArray(String s) {
@@ -89,7 +99,7 @@ public class PacketParser {
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
+                    + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
     }
