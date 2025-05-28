@@ -1,7 +1,8 @@
 package com.hyeonpyo.wallpadcontroller.parser;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class DeviceStructureLoader {
 
     public void loadDeviceStructure() {
         try {
-            File defaultFile = new File("src/main/resources/commax-packet-struct.yml");
+            InputStream input = getClass().getClassLoader().getResourceAsStream("commax-packet-struct.yml");
             // File customFile = new File("share/packet_structures_custom.yaml");
 
             // File targetFile;
@@ -34,11 +35,11 @@ public class DeviceStructureLoader {
             //     targetFile = defaultFile;
             // }
 
-            if (!defaultFile.exists()) {
-                throw new IOException("구조 파일이 존재하지 않습니다: " + defaultFile.getAbsolutePath());
+            if (input == null) {
+                throw new FileNotFoundException("리소스 파일이 없습니다: commax-packet-struct.yml");
             }
 
-            Map<String, Object> structure = yamlMapper.readValue(defaultFile, new TypeReference<>() {});
+            Map<String, Object> structure = yamlMapper.readValue(input, new TypeReference<>() {});
             deviceStructure.clear();
             deviceStructure.putAll(structure);
             log.info("✅ '{}' 벤더의 패킷 구조 로드 완료", "commax");

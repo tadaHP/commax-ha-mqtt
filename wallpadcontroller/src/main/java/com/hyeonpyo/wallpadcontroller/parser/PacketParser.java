@@ -1,16 +1,10 @@
 package com.hyeonpyo.wallpadcontroller.parser;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,24 +12,16 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class PacketParser {
 
-    private final Map<String, Object> deviceStructure = new HashMap<>();
-    private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final Map<String, Object> deviceStructure;
 
-    public PacketParser() {
+    public PacketParser(DeviceStructureLoader loader) {
+        this.deviceStructure = loader.getDeviceStructure();
         loadDeviceStructure();
     }
 
     private void loadDeviceStructure() {
-        try {
-            File file = new File("src/main/resources/commax-packet-struct.yml");
-            Map<String, Object> structure = yamlMapper.readValue(file, new TypeReference<>() {});
-            deviceStructure.clear();
-            deviceStructure.putAll(structure);
-            log.info("✅ 패킷 구조 로드 완료");
-            addFieldPositions();
-        } catch (IOException e) {
-            log.error("❌ 패킷 구조 로드 실패", e);
-        }
+        log.info("✅ 패킷 구조 로드 완료");
+        addFieldPositions();
     }
 
     private void addFieldPositions() {
