@@ -1,4 +1,4 @@
-package com.hyeonpyo.wallpadcontroller.loader;
+package com.hyeonpyo.wallpadcontroller.parser;
 
 import java.io.File;
 import java.io.IOException;

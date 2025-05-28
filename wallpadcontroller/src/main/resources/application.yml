@@ -1,3 +1,10 @@
 spring:
   application:
     name: Wallpadcontroller
+
+mqtt:
+  broker: tcp://192.168.50.192:1883
+  client-id: wallpad-controller
+  username: hyeonpyo
+  password: J7QNgG6ta4%3OC,+U
+  ha-topic: commax
