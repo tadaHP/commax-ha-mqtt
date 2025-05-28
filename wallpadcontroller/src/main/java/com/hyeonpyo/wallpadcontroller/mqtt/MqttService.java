@@ -23,8 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MqttService implements MqttCallback {
 
     private final MqttProperties mqttProperties;
-    private final String EW11_TOPIC = "ew11/#";
-    // private final PacketParser packetParser;
+    private final String EW11_RECEIVE_TOPIC = "ew11/recv";
     private final PacketParser packetParser;
 
     private MqttClient mqttClient;
@@ -50,8 +49,8 @@ public class MqttService implements MqttCallback {
             
             String haTopic = mqttProperties.getHaTopic() + "/#";
 
-            mqttClient.subscribe(EW11_TOPIC, 0);
-            log.info("📥 MQTT 구독 완료: {}", EW11_TOPIC);
+            mqttClient.subscribe(EW11_RECEIVE_TOPIC, 0);
+            log.info("📥 MQTT 구독 완료: {}", EW11_RECEIVE_TOPIC);
 
             mqttClient.subscribe(haTopic, 0);
             log.info("📥 MQTT 구독 완료: {}", haTopic);
@@ -83,23 +82,24 @@ public class MqttService implements MqttCallback {
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
+
         byte[] payloadBytes = message.getPayload();
         StringBuilder hexBuilder = new StringBuilder();
 
         for (byte b : payloadBytes) {
             hexBuilder.append(String.format("%02X ", b));
         }
-
+            
         String hexWithSpaces = hexBuilder.toString().trim();
         String hex = hexWithSpaces.replace(" ", "");
-
+            
         log.info("📩 MQTT 수신: {} → HEX: {}", topic, hexWithSpaces);
         ParsedPacket result = packetParser.parse(hex);
         if (result != null) {
             log.info("장치: {}", result.getDeviceName());
             log.info("종류: {}", result.getKind());
             result.getParsedFields().forEach((k, v) -> log.info("  {} = {}", k, v));
-        }
+        }    
     }
 
     @Override
