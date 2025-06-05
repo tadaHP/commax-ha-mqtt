@@ -1,6 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.parser.commax.type;
 
-import java.util.Map;
+import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,5 +10,6 @@ import lombok.Data;
 public class ParsedPacket {
     private String deviceName;
     private PacketKind kind;
-    private Map<String, String> parsedFields;
+    // private Map<String, String> parsedFields; //추후 삭제
+    private DeviceState parsedState; 
 }

@@ -49,7 +49,7 @@ public class MqttReceiveService implements MqttCallback{
 
     @Override
     public void connectionLost(Throwable cause) {
-        log.warn("⚠️ MQTT 연결 끊김: {}", cause.getMessage());
+        log.warn("⚠️ MQTT 연결 끊김: {}", cause.getMessage(), cause);
     }
 
     @Override
