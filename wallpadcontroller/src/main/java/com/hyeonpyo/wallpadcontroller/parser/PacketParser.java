@@ -105,11 +105,32 @@ public class PacketParser {
                         }
                     }
                     Optional<DeviceState> state = this.toDeviceState(deviceName, parsedFields);
-                    return state.map(d -> new ParsedPacket(deviceName, PacketKind.fromKey(type), d));
+                    if (state.isEmpty()) {
+                        log.warn("⚠️ toDeviceState 실패, 알수 없는 타입: deviceName='{}', fields={}", deviceName, parsedFields);
+                        return Optional.empty();
+                    }
+                    int deviceIndex = extractDeviceIndex(structure, bytes);
+                    return state.map(d -> new ParsedPacket(deviceName, deviceIndex, PacketKind.fromKey(type), d));
                 }
             }
         }
         return Optional.empty();
+    }
+
+    private int extractDeviceIndex(Map<String, Object> structure, byte[] bytes) {
+        for (Map.Entry<String, Object> entry : structure.entrySet()) {
+            String posStr = entry.getKey();  // 예: "2"
+            Map<String, Object> field = cast(entry.getValue());
+            String name = (String) field.get("name");
+
+            if ("deviceId".equalsIgnoreCase(name)) {
+                int pos = Integer.parseInt(posStr); // 패킷 구조는 1부터 시작
+                if (bytes.length > pos) {
+                    return bytes[pos] & 0xFF; // unsigned byte to int
+                }
+            }
+        }
+        return 1; // 기본값
     }
 
     private Optional<DeviceState> toDeviceState(String deviceName, Map<String, String> fields) {
