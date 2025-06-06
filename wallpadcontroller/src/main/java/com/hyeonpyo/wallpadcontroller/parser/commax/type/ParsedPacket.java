@@ -9,6 +9,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class ParsedPacket {
     private String deviceName;
+    private int deviceIndex;
     private PacketKind kind;
     // private Map<String, String> parsedFields; //추후 삭제
     private DeviceState parsedState; 
