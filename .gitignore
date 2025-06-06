@@ -222,4 +222,7 @@ pyrightconfig.json
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,java,python
+# SQLite database
+*.db
+*.db-shm
+*.db-wal
