@@ -11,20 +11,19 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class FanState implements DeviceState {
-    private String power;
     private String speed;
+    private String mode;
 
     @Override
     public String toJson() {
-        return String.format("{\"power\": \"%s\", \"speed\": \"%s\"}", power, speed);
+        return String.format("{\"speed\": \"%s\", \"mode\": \"%s\"}", speed, mode);
     }
 
     @Override
     public Map<String, String> toMap() {
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("power", power);
         if (speed != null) map.put("speed", speed);
+        if (mode != null) map.put("mode", mode);
         return map;
     }
-
 }
