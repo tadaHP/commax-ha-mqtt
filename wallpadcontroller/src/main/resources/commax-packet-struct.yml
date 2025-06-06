@@ -270,13 +270,13 @@ Gas:
       "1":
         name: power
         values:
-          "on": "80"
-          "off": "48"
+          "on": "A0"
+          "off": "50"
       "2":
         name: powerRepeat
         values:
-          "on": "80"
-          "off": "48"
+          "on": "A0"
+          "off": "50"
       "3": 
         name: empty
       "4": 
