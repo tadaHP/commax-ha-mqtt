@@ -437,7 +437,8 @@ Fan:
       "1":
         name: power
         values:
-          "on": "04"
+          "normal": "04"
+          "bypass": "07"
           "off": "00"
         memo: 명령에 없는 night, auto가 존재한다고함.
       "2":

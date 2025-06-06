@@ -135,8 +135,19 @@ public class PacketParser {
 
     private Optional<DeviceState> toDeviceState(String deviceName, Map<String, String> fields) {
         switch (deviceName) {
-            case "Fan":
-                return Optional.of(new FanState(fields.get("power"), fields.get("speed")));
+            case "Fan": {
+                String powerHex = fields.get("power"); // mode 판단용으로만 사용
+                String speedHex = fields.get("speed");
+                        
+                String mode = switch (powerHex != null ? powerHex.toUpperCase() : "") {
+                    case "04" -> "normal";
+                    case "07" -> "bypass";
+                    case "00" -> "off";
+                    default -> "off";
+                };
+            
+                return Optional.of(new FanState(speedHex, mode));
+            }
             case "Thermo":
                 return Optional.of(new ThermoState(fields.get("power"), fields.get("action"), fields.get("currentTemp"), fields.get("targetTemp")));
             case "Light":

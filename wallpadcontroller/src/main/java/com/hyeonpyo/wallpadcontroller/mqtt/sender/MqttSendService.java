@@ -53,7 +53,7 @@ public class MqttSendService {
                 message.setRetained(retained); // Retained 메시지 설정
 
                 mqttClient.publish(topic, message);
-                log.info("📤 MQTT 발행 성공: Topic: \"{}\", QoS: {}, Retained: {}, Payload: \"{}\"", topic, qos, retained, payload);
+                // log.info("📤 MQTT 발행 성공: Topic: \"{}\", QoS: {}, Retained: {}, Payload: \"{}\"", topic, qos, retained, payload);
 
             } else {
                 log.warn("⚠️ MQTT 클라이언트가 연결되어 있지 않습니다. 발행 시도 실패 - Topic: \"{}\", Payload: \"{}\"", topic, payload);

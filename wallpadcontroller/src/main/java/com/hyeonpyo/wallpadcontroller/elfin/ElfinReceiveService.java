@@ -49,12 +49,13 @@ public class ElfinReceiveService { // orchestraction?
         String hexWithSpaces = hexBuilder.toString().trim();
         String hex = hexWithSpaces.replace(" ", "");
 
-        log.info("\uD83D\uDCE9 MQTT 수신: {} → HEX: {}", "ew11/recv", hexWithSpaces);
+        // log.info("\uD83D\uDCE9 MQTT 수신: {} → HEX: {}", "ew11/recv", hexWithSpaces);
 
         List<ParsedPacket> multiple = packetParser.parseMultiple(hex);
 
         for (ParsedPacket parsedPacket : multiple) {
-            if(parsedPacket.getDeviceName().equals("Light")){
+            if(parsedPacket.getDeviceName().equals("Fan")){
+                log.info("\uD83D\uDCE9 MQTT 수신: {} → HEX: {}", "ew11/recv", hexWithSpaces);
                 log.info("장치-번호: {}-{}", parsedPacket.getDeviceName(), parsedPacket.getDeviceIndex());
                 log.info("종류: {}", parsedPacket.getKind());
                 log.info("패킷: {}", parsedPacket.getParsedState().toJson());

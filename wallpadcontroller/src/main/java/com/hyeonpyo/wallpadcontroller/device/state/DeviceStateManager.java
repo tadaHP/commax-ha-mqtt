@@ -50,8 +50,10 @@ public class DeviceStateManager {
 
     public void updateState(String deviceName, int deviceIndex, Map<String, String> stateMap) {
         for (Map.Entry<String, String> entry : stateMap.entrySet()) {
-            String key = this.makeKey(deviceName, deviceIndex, entry.getKey());
-            String readableValue = convertToReadableState(deviceName, entry.getKey(), entry.getValue());
+            String field = entry.getKey();
+            String hexValue = entry.getValue();
+            String key = makeKey(deviceName, deviceIndex, field);
+            String readableValue = convertToReadableState(deviceName, field, hexValue);
             if (readableValue != null && !"null".equalsIgnoreCase(readableValue)) {
                 latestState.put(key, readableValue);
             }
@@ -61,7 +63,7 @@ public class DeviceStateManager {
     private String makeKey(String deviceName, int deviceIndex, String field) {
         String fullName = deviceName + deviceIndex;
         String suffix = switch (field) {
-            case "power", "action", "curTemp", "setTemp" -> "/state";
+            case "power", "action", "curTemp", "setTemp", "mode", "speed" -> "/state";
             default -> "";
         };
         return fullName + "/" + field + suffix;
@@ -70,35 +72,35 @@ public class DeviceStateManager {
     private String convertToReadableState(String deviceName, String field, String value) {
         Object deviceObj = structureLoader.getDeviceStructure().get(deviceName);
         if (!(deviceObj instanceof Map<?, ?> device)) return value;
-        
+
         Object stateObj = device.get("state");
         if (!(stateObj instanceof Map<?, ?> statePacket)) return value;
-        
+
         Object structureObj = statePacket.get("structure");
         if (!(structureObj instanceof Map<?, ?> structure)) return value;
-        
+
         for (Map.Entry<?, ?> entry : structure.entrySet()) {
             Object fieldMapObj = entry.getValue();
             if (!(fieldMapObj instanceof Map<?, ?> fieldMap)) continue;
-        
+
             Object fieldNameObj = fieldMap.get("name");
             if (!(fieldNameObj instanceof String fieldName)) continue;
-        
+
             if (!fieldName.equals(field)) continue;
-        
+
             Object valuesObj = fieldMap.get("values");
             if (!(valuesObj instanceof Map<?, ?> values)) continue;
-        
+
             for (Map.Entry<?, ?> valueEntry : values.entrySet()) {
                 if (!(valueEntry.getKey() instanceof String rawKey)) continue;
                 if (!(valueEntry.getValue() instanceof String hexValue)) continue;
-            
+
                 if (hexValue.equalsIgnoreCase(value)) {
                     return normalizeValue(deviceName, field, rawKey);
                 }
             }
         }
-    
+
         return value;
     }
 
@@ -120,7 +122,8 @@ public class DeviceStateManager {
                     };
                 } else yield rawKey;
             }
-            case "Light", "LightBreaker", "Outlet", "Fan" -> {
+            case "Fan" -> rawKey;
+            case "Light", "LightBreaker", "Outlet" -> {
                 if ("power".equals(field)) {
                     yield switch (rawKey) {
                         case "on" -> "ON";
