@@ -1,4 +1,4 @@
-package com.hyeonpyo.wallpadcontroller.test;
+package com.hyeonpyo.wallpadcontroller.initializer;
 
 import java.util.Map;
 
