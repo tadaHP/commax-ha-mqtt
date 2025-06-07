@@ -148,8 +148,31 @@ public class PacketParser {
             
                 return Optional.of(new FanState(speedHex, mode, mode));
             }
-            case "Thermo":
-                return Optional.of(new ThermoState(fields.get("power"), fields.get("action"), fields.get("currentTemp"), fields.get("targetTemp")));
+            case "Thermo": {
+                String powerHex = fields.get("power");
+                String actionHex = fields.get("power"); // 여기에 action 필드가 없어서 power와 동일하게 설정된 것으로 보임
+                        
+                String power = switch (powerHex != null ? powerHex.toUpperCase() : "") {
+                    case "80" -> "off";
+                    case "81" -> "idle";
+                    case "83" -> "heating";
+                    default -> "off";
+                };
+            
+                String action = switch (actionHex != null ? actionHex.toUpperCase() : "") {
+                    case "80" -> "off";
+                    case "81" -> "idle";
+                    case "83" -> "heating";
+                    default -> "off";
+                };
+            
+                return Optional.of(new ThermoState(
+                    power,
+                    action,
+                    fields.get("currentTemp"),
+                    fields.get("targetTemp")
+                ));
+            }
             case "Light":
             case "LightBreaker":
                 return Optional.of(new LightState(fields.get("power")));
