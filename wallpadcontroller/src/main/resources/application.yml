@@ -4,7 +4,7 @@ spring:
   jpa:
     database-platform: org.hibernate.community.dialect.SQLiteDialect
     hibernate:
-      ddl-auto: create-drop  # 개발 중에는 create-drop, 운영 시에는 none
+      ddl-auto: update 
   datasource:
     url: jdbc:sqlite:./mydb.db
     driver-class-name: org.sqlite.JDBC
