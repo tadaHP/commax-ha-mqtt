@@ -146,7 +146,7 @@ public class PacketParser {
                     default -> "off";
                 };
             
-                return Optional.of(new FanState(speedHex, mode));
+                return Optional.of(new FanState(speedHex, mode, mode));
             }
             case "Thermo":
                 return Optional.of(new ThermoState(fields.get("power"), fields.get("action"), fields.get("currentTemp"), fields.get("targetTemp")));

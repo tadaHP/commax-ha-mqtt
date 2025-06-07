@@ -101,39 +101,54 @@ public class DeviceStateManager {
             }
         }
 
-        return value;
+        return normalizeValue(deviceName, field, value);
     }
 
     private String normalizeValue(String deviceName, String field, String rawKey) {
-        return switch (deviceName) {
-            case "Thermo" -> {
+        switch (deviceName) {
+            case "Thermo":
                 if ("power".equals(field)) {
-                    yield switch (rawKey) {
+                    return switch (rawKey) {
                         case "idle", "heating" -> "heat";
                         case "off" -> "off";
                         default -> rawKey;
                     };
                 } else if ("action".equals(field)) {
-                    yield switch (rawKey) {
+                    return switch (rawKey) {
                         case "idle" -> "idle";
                         case "heating" -> "heating";
                         case "off" -> "off";
                         default -> rawKey;
                     };
-                } else yield rawKey;
-            }
-            case "Fan" -> rawKey;
-            case "Light", "LightBreaker", "Outlet" -> {
+                } else {
+                    return rawKey;
+                }
+
+            case "Fan":
                 if ("power".equals(field)) {
-                    yield switch (rawKey) {
+                    return switch (rawKey.toLowerCase()) {
+                        case "off" -> "OFF";
+                        case "normal", "bypass" -> "ON";
+                        default -> "OFF";
+                    };
+                } else {
+                    return rawKey;
+                }
+
+            case "Light", "LightBreaker", "Outlet":
+                if ("power".equals(field)) {
+                    return switch (rawKey) {
                         case "on" -> "ON";
                         case "off" -> "OFF";
                         default -> rawKey;
                     };
-                } else yield rawKey;
-            }
-            default -> rawKey;
-        };
+                } else {
+                    return rawKey;
+                }
+
+            default:
+                return rawKey;
+        }
     }
 
 
