@@ -191,7 +191,7 @@ public class PacketParser {
             }
             default:
                 log.warn("⚠️ toDeviceState: Unknown deviceName '{}', fields={}", deviceName, fields);
-                return null;
+                return Optional.empty();
         }
     }
 
