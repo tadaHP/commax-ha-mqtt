@@ -26,20 +26,21 @@ public class MqttReceiveService implements MqttCallback{
 
     private final MqttClient mqttClient;
 
+
     @PostConstruct
     public void init() {
         try {
-            if (mqttClient.isConnected()) {
-                mqttClient.setCallback(this);
-                log.info("📞 MQTT 콜백 설정 완료: {}", this.getClass().getSimpleName());
-
-                //토픽 구독
-                mqttClient.subscribe(EW11_RECEIVE_TOPIC, 0);
-                log.info("📥 MQTT 구독 완료: {}", EW11_RECEIVE_TOPIC);
-
-            } else {
-                log.error("⚠️ MQTT 클라이언트가 연결되어 있지 않아, MqttReceiveService 초기화(콜백 설정 및 구독)를 진행할 수 없습니다.");
+            if (!mqttClient.isConnected()) {
+                log.warn("⚠️ MQTT 클라이언트가 연결되어 있지 않습니다. 콜백/구독 설정은 생략됩니다.");
+                return;
             }
+
+            mqttClient.setCallback(this);
+            log.info("📞 MQTT 콜백 설정 완료: {}", this.getClass().getSimpleName());
+
+            mqttClient.subscribe(EW11_RECEIVE_TOPIC, 0);
+            log.info("📥 MQTT 구독 완료: {}", EW11_RECEIVE_TOPIC);
+
         } catch (MqttException e) {
             log.error("❌ MqttReceiveService 초기화 중 MQTT 오류 발생 (콜백 설정 또는 구독 실패)", e);
         } catch (Exception e) {
@@ -50,22 +51,18 @@ public class MqttReceiveService implements MqttCallback{
     @Override
     public void connectionLost(Throwable cause) {
         log.warn("⚠️ MQTT 연결 끊김: {}", cause.getMessage(), cause);
+        // TODO: 추후 재 구독 처리 필요
     }
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-
-        
         switch (topic) {
             case EW11_RECEIVE_TOPIC:
                 elfinReceiveService.publishCommax(message);
                 break;
             default:
                 break;
-        }
-
-
-        
+        }   
     }
 
     @Override
