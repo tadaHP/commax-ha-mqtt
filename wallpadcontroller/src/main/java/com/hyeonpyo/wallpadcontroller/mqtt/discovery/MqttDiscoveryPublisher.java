@@ -116,39 +116,38 @@ public class MqttDiscoveryPublisher {
                         // 기본 전원 관련
                         payload.put("state_topic", HA_TOPIC + "/" + baseId + "/power/state");
                         payload.put("command_topic", HA_TOPIC + "/" + baseId + "/power/command");
-                        // payload.put("value_template", "{{ value | lower }}");
                         payload.put("payload_on", "ON");
                         payload.put("payload_off", "OFF");
 
                         // 팬 모드(preset_mode)를 normal/bypass로 사용
                         payload.put("preset_mode_state_topic", HA_TOPIC + "/" + baseId + "/mode/state");
                         payload.put("preset_mode_command_topic", HA_TOPIC + "/" + baseId + "/mode/command");
-                        payload.put("preset_modes", List.of("normal", "bypass"));
+                        payload.put("preset_modes", List.of("NORMAL", "BYPASS"));
 
                         // 팬 속도는 percentage 기반으로 처리
                         payload.put("percentage_state_topic", HA_TOPIC + "/" + baseId + "/speed/state");
                         payload.put("percentage_command_topic", HA_TOPIC + "/" + baseId + "/speed/command");
                         payload.put("percentage_value_template", """
-                            {% if value == 'low' %}
-                              33
-                            {% elif value == 'medium' %}
-                              66
-                            {% elif value == 'high' %}
-                              100
-                            {% else %}
-                              0
-                            {% endif %}
-                            """);
+                          {% if value == 'LOW' %}
+                            33
+                          {% elif value == 'MEDIUM' %}
+                            66
+                          {% elif value == 'HIGH' %}
+                            100
+                          {% else %}
+                            0
+                          {% endif %}
+                          """);
 
-                        payload.put("percentage_command_template", """
-                            {% if value | int <= 33 %}
-                              low
-                            {% elif value | int <= 66 %}
-                              medium
-                            {% else %}
-                              high
-                            {% endif %}
-                            """);
+                      payload.put("percentage_command_template", """
+                          {% if value | int <= 33 %}
+                            LOW
+                          {% elif value | int <= 66 %}
+                            MEDIUM
+                          {% else %}
+                            HIGH
+                          {% endif %}
+                          """);
                     }
                     case Thermo -> {
                         topic = DISCOVERY_PREFIX + "/climate/" + baseId + "/config";
@@ -158,7 +157,7 @@ public class MqttDiscoveryPublisher {
                         payload.put("mode_command_topic", HA_TOPIC + "/" + baseId + "/power/command");
                         payload.put("mode_state_topic", HA_TOPIC + "/" + baseId + "/power/state");
                         payload.put("action_topic", HA_TOPIC + "/" + baseId + "/action/state");
-                        payload.put("action_template", "{% if value == 'off' %}off{% elif value == 'idle' %}idle{% elif value == 'heating' %}heating{% endif %}");
+                        payload.put("action_template", "{% if value == 'OFF' %}OFF{% elif value == 'IDLE' %}IDLE{% elif value == 'HEATING' %}HEATING{% endif %}");
                         payload.put("modes", List.of("off", "heat"));
                         payload.put("temperature_unit", "C");
                         payload.put("min_temp", 5);

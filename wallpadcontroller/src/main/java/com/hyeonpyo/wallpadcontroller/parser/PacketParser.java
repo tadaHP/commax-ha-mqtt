@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketField;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketFieldValue;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
@@ -34,8 +35,10 @@ public class PacketParser {
 
     private final DeviceTypeRepository deviceTypeRepository;
 
-    private final Map<String, Map<String, PacketType>> deviceStructure = new HashMap<>();
+    // private final Map<String, Map<String, PacketType>> deviceStructure = new HashMap<>();
     // <deviceType의이름(light, thermo, fan), <packet.getKind(command,state,ack 등), 해당하는 엔티티> >
+    private final Map<String, Map<String, Map<String, String>>> fieldValueMap;
+
     private final Map<Long, Map<Integer, PacketField>> fieldLookupMap = new HashMap<>();
     // <PacketType의 PK, <position(패킷의 n번째), 패킷 n번째의 역할 정보>>
     private final Map<String, PacketType> headerMap = new HashMap<>();
@@ -61,9 +64,35 @@ public class PacketParser {
                 headerMap.put(header, packet);
                 headerToDeviceName.put(header, deviceType.getName());
             }
-            deviceStructure.put(deviceType.getName(), packetMap);
+            // deviceStructure.put(deviceType.getName(), packetMap);
         }
-        log.info("✅ 패킷 구조 DB에서 로드 완료 ({}종류)", deviceStructure.size());
+        // log.info("✅ 패킷 구조 DB에서 로드 완료 ({}종류)", deviceStructure.size());
+    }
+
+    @PostConstruct
+    public void initStructureFromDb() {
+        List<DeviceType> deviceTypes = deviceTypeRepository.findAllWithFullStructure();
+
+        for (DeviceType deviceType : deviceTypes) {
+            String deviceName = deviceType.getName();
+            Map<String, Map<String, String>> fieldMap = new HashMap<>();
+
+            for (PacketType packetType : deviceType.getPacketTypes()) {
+                if (!"state".equalsIgnoreCase(packetType.getKind())) continue;
+
+                for (PacketField field : packetType.getFields()) {
+                    if (field.getName() == null || "empty".equals(field.getName())) continue;
+
+                    Map<String, String> values = new HashMap<>();
+                    for (PacketFieldValue fieldValue : field.getValueMappings()) {
+                        values.put(fieldValue.getRawKey(), fieldValue.getHex().toUpperCase());
+                    }
+                    fieldMap.put(field.getName(), values);
+                }
+            }
+
+            fieldValueMap.put(deviceName, fieldMap);
+        }
     }
 
     public List<ParsedPacket> parseMultiple(String hexString) {
@@ -94,8 +123,9 @@ public class PacketParser {
         for (int i = 1; i < PACKET_LENGTH; i++) {
             PacketField field = fields.get(i);
             if (field == null || "empty".equals(field.getName())) continue;
-            String value = String.format("%02X", bytes[i]);
-            parsedFields.put(field.getName(), value);
+            String hex = String.format("%02X", bytes[i]);
+            String readable = convertHexToRawKey(deviceName, field.getName(), hex);
+            parsedFields.put(field.getName(), readable);
         }
     
         int deviceIndex = extractDeviceIndex(fields, bytes);
@@ -144,5 +174,21 @@ public class PacketParser {
                     + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
+    }
+
+    private String convertHexToRawKey(String deviceName, String field, String hex) {
+        Map<String, Map<String, String>> fieldMap = fieldValueMap.get(deviceName);
+        if (fieldMap == null) return hex;
+
+        Map<String, String> valueMap = fieldMap.get(field);
+        if (valueMap == null) return hex;
+
+        for (Map.Entry<String, String> entry : valueMap.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(hex)) {
+                return entry.getKey();
+            }
+        }
+
+        return hex;
     }
 }

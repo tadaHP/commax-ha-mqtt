@@ -60,10 +60,10 @@ public class StartUpRunner implements CommandLineRunner{
                 }
             }
 
-            System.out.println("✅ commax-initial.sql 실행 완료");
+            log.info("✅ commax-initial.sql 실행 완료");
 
         } catch (SQLException e) {
-            System.err.println("❌ SQL 실행 중 오류 발생: " + e.getMessage());
+            log.error("❌ SQL 실행 중 오류 발생: " + e.getMessage());
             throw e;
         }
 
