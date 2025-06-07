@@ -1,5 +1,7 @@
 package com.hyeonpyo.wallpadcontroller.device.state;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -8,8 +10,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketField;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketFieldValue;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
+import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
 import com.hyeonpyo.wallpadcontroller.mqtt.sender.MqttSendService;
-import com.hyeonpyo.wallpadcontroller.parser.DeviceStructureLoader;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PostConstruct;
@@ -24,8 +30,9 @@ public class DeviceStateManager {
 
     private final MqttSendService mqttSendService;
     private final MqttProperties mqttProperties;
-    private final DeviceStructureLoader structureLoader;
+    private final DeviceTypeRepository deviceTypeRepository;
 
+    private final Map<String, Map<String, Map<String, String>>> fieldValueMap = new HashMap<>();
 
     private final Map<String, String> latestState = new ConcurrentHashMap<>();
     private final Map<String, String> lastPublishedState = new ConcurrentHashMap<>();
@@ -48,7 +55,35 @@ public class DeviceStateManager {
         }, 0, 1, TimeUnit.SECONDS);
     }
 
-    public void updateState(String deviceName, int deviceIndex, Map<String, String> stateMap) {
+    @PostConstruct
+    public void initStructureFromDb() {
+        List<DeviceType> deviceTypes = deviceTypeRepository.findAllWithFullStructure();
+
+        for (DeviceType deviceType : deviceTypes) {
+            String deviceName = deviceType.getName();
+            Map<String, Map<String, String>> fieldMap = new HashMap<>();
+
+            for (PacketType packetType : deviceType.getPacketTypes()) {
+                if (!"state".equalsIgnoreCase(packetType.getKind())) continue;
+
+                for (PacketField field : packetType.getFields()) {
+                    if (field.getName() == null || "empty".equals(field.getName())) continue;
+
+                    Map<String, String> values = new HashMap<>();
+                    for (PacketFieldValue fieldValue : field.getValueMappings()) {
+                        values.put(fieldValue.getRawKey(), fieldValue.getHex().toUpperCase());
+                    }
+                    fieldMap.put(field.getName(), values);
+                }
+            }
+
+            fieldValueMap.put(deviceName, fieldMap);
+        }
+
+        log.info("✅ 상태값 매핑 정보 DB에서 로드 완료 ({}개 디바이스)", fieldValueMap.size());
+    }
+    
+        public void updateState(String deviceName, int deviceIndex, Map<String, String> stateMap) {
         for (Map.Entry<String, String> entry : stateMap.entrySet()) {
             String field = entry.getKey();
             String hexValue = entry.getValue();
@@ -69,41 +104,21 @@ public class DeviceStateManager {
         return fullName + "/" + field + suffix;
     }
 
-    private String convertToReadableState(String deviceName, String field, String value) {
-        Object deviceObj = structureLoader.getDeviceStructure().get(deviceName);
-        if (!(deviceObj instanceof Map<?, ?> device)) return value;
+    private String convertToReadableState(String deviceName, String field, String hexValue) {
+        Map<String, Map<String, String>> fieldMap = fieldValueMap.get(deviceName);
+        if (fieldMap == null) return hexValue;
 
-        Object stateObj = device.get("state");
-        if (!(stateObj instanceof Map<?, ?> statePacket)) return value;
+        Map<String, String> valuesMap = fieldMap.get(field);
+        if (valuesMap == null) return hexValue;
 
-        Object structureObj = statePacket.get("structure");
-        if (!(structureObj instanceof Map<?, ?> structure)) return value;
-
-        for (Map.Entry<?, ?> entry : structure.entrySet()) {
-            Object fieldMapObj = entry.getValue();
-            if (!(fieldMapObj instanceof Map<?, ?> fieldMap)) continue;
-
-            Object fieldNameObj = fieldMap.get("name");
-            if (!(fieldNameObj instanceof String fieldName)) continue;
-
-            if (!fieldName.equals(field)) continue;
-
-            Object valuesObj = fieldMap.get("values");
-            if (!(valuesObj instanceof Map<?, ?> values)) continue;
-
-            for (Map.Entry<?, ?> valueEntry : values.entrySet()) {
-                if (!(valueEntry.getKey() instanceof String rawKey)) continue;
-                if (!(valueEntry.getValue() instanceof String hexValue)) continue;
-
-                if (hexValue.equalsIgnoreCase(value)) {
-                    return normalizeValue(deviceName, field, rawKey);
-                }
+        for (Map.Entry<String, String> entry : valuesMap.entrySet()) {
+            if (entry.getValue().equalsIgnoreCase(hexValue)) {
+                return normalizeValue(deviceName, field, entry.getKey());
             }
         }
 
-        return normalizeValue(deviceName, field, value);
+        return normalizeValue(deviceName, field, hexValue);
     }
-
     private String normalizeValue(String deviceName, String field, String rawKey) {
         switch (deviceName) {
             case "Thermo":

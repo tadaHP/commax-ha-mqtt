@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ElfinReceiveService { // orchestraction? 
 
+    // private final YamlPacketParser packetParser;
     private final PacketParser packetParser;
     private final MqttProperties mqttProperties;
     private final MqttSendService mqttSendService;
@@ -71,6 +72,9 @@ public class ElfinReceiveService { // orchestraction?
             String deviceType = parsedPacket.getDeviceName();
             int deviceIndex = parsedPacket.getDeviceIndex();
             PacketKind kind = parsedPacket.getKind();
+
+            // log.info("📥 수신된 패킷: {} (index: {}, kind: {})", deviceType, deviceIndex, kind);
+            // log.info("패킷 정보: {} ", parsedPacket.getParsedState().toJson());
 
             if (kind == PacketKind.STATE) {
                 String uniqueId = "commax_" + deviceType + "_" + deviceIndex;
