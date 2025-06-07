@@ -151,7 +151,7 @@ public class PacketParser {
             case "Thermo": {
                 String powerHex = fields.get("power");
                 String actionHex = fields.get("power"); // 여기에 action 필드가 없어서 power와 동일하게 설정된 것으로 보임
-                        
+
                 String power = switch (powerHex != null ? powerHex.toUpperCase() : "") {
                     case "80" -> "off";
                     case "81" -> "idle";
@@ -178,8 +178,17 @@ public class PacketParser {
                 return Optional.of(new LightState(fields.get("power")));
             case "Outlet":
                 return Optional.of(new OutletState(fields.get("power"), fields.get("watt"), fields.get("ecomode"), fields.get("cutoff")));
-            case "Gas":
-                return Optional.of(new GasState(fields.get("power")));
+            case "Gas": {
+                String powerHex = fields.get("power");
+            
+                String state = switch (powerHex != null ? powerHex.toUpperCase() : "") {
+                    case "A0" -> "ON";
+                    case "50" -> "OFF";
+                    default -> null;
+                };
+            
+                return Optional.of(new GasState(state));
+            }
             default:
                 log.warn("⚠️ toDeviceState: Unknown deviceName '{}', fields={}", deviceName, fields);
                 return null;
