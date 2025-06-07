@@ -75,7 +75,6 @@ public class ElfinReceiveService { // orchestraction?
             if (kind == PacketKind.STATE) {
                 String uniqueId = "commax_" + deviceType + "_" + deviceIndex;
 
-                // ✅ Map에 없을 때만 DB 등록 및 Map 추가
                 if (!registeredDevices.containsKey(uniqueId)) {
                     try {
                         DeviceEntity entity = DeviceEntity.builder()

@@ -448,6 +448,7 @@ Fan:
       "3":
         name: speed
         values:
+          "off": "00"
           "low": "01"
           "medium": "02"
           "high": "03"
