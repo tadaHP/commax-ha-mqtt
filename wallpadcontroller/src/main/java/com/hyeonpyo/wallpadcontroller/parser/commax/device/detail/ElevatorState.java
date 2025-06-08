@@ -10,23 +10,22 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class FanState implements DeviceState {
-    private String speed;
-    private String mode;
+public class ElevatorState implements DeviceState{
     private final String power;
+    private final String floor;
 
-
-    @Override
-    public String toJson() {
-        return String.format("{\"speed\": \"%s\", \"mode\": \"%s\"}", speed, mode);
-    }
 
     @Override
     public Map<String, String> toMap() {
         Map<String, String> map = new HashMap<>();
-        map.put("speed", speed);
-        map.put("mode", mode);
         map.put("power", power);
+        map.put("floor", floor);
         return map;
+    }
+
+
+    @Override
+    public String toJson() {
+        return String.format("{\"power\":\"%s\", \"floor\":\"%s\"}", power, floor);
     }
 }

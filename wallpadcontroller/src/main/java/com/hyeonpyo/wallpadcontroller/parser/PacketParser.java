@@ -16,6 +16,7 @@ import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketFieldValue;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
+import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ElevatorState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.FanState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.GasState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.LightState;
@@ -159,6 +160,8 @@ public class PacketParser {
                 return new OutletState(fields.get("power"), fields.get("watt"), fields.get("ecomode"), fields.get("cutoff"));
             case "Gas":
                 return new GasState(fields.get("power"));
+            case "EV":
+                return new ElevatorState(fields.get("power"), fields.get("floor"));
             default:
                 log.warn("⚠️ toDeviceState: Unknown deviceName '{}', fields={}", deviceName, fields);
                 return null;
