@@ -245,9 +245,9 @@ INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES 
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (71, 108, 'HIGH', '03', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (72, 108, 'ON', '04', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (73, 113, 'id', 'FF', '');
-INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (74, 120, 'NORMAL', '04', '명령에 없는 night, auto가 존재한다고함.');
-INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (75, 120, 'BYPASS', '07', '명령에 없는 night, auto가 존재한다고함.');
-INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (76, 120, 'OFF', '00', '명령에 없는 night, auto가 존재한다고함.');
+INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (74, 120, 'normal', '04', '명령에 없는 night, auto가 존재한다고함.');
+INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (75, 120, 'bypass', '07', '명령에 없는 night, auto가 존재한다고함.');
+INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (76, 120, 'off', '00', '명령에 없는 night, auto가 존재한다고함.');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (77, 121, 'id', 'FF', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (78, 122, 'OFF', '00', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (79, 122, 'LOW', '01', '');

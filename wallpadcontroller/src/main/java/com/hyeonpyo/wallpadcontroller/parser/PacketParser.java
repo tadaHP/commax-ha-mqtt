@@ -150,7 +150,7 @@ public class PacketParser {
     private DeviceState toDeviceState(String deviceName, Map<String, String> fields) {
         switch (deviceName) {
             case "Fan":
-                return new FanState(fields.get("speed"), fields.get("power"), fields.get("power"));
+                return new FanState(fields.get("speed"), fields.get("power"));
             case "Thermo":
                 return new ThermoState(fields.get("power"), fields.get("power"), fields.get("currentTemp"), fields.get("targetTemp"));
             case "Light":
