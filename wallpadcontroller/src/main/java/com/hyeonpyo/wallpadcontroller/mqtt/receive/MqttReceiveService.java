@@ -7,21 +7,30 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
 
+import com.hyeonpyo.wallpadcontroller.elfin.ElfinCommandService;
 import com.hyeonpyo.wallpadcontroller.elfin.ElfinReceiveService;
+import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MqttReceiveService implements MqttCallback{
     private final String EW11_RECEIVE_TOPIC = "ew11/recv";
+    private final String HA_COMMAND_TOPIC;
+
     private final ElfinReceiveService elfinReceiveService;
-    
+    private final ElfinCommandService elfinCommandService;
 
     private final MqttClient mqttClient;
+
+    public MqttReceiveService(ElfinReceiveService elfinReceiveService, ElfinCommandService elfinCommandService, MqttClient mqttClient, MqttProperties mqttProperties) {
+        this.elfinReceiveService = elfinReceiveService;
+        this.elfinCommandService = elfinCommandService;
+        this.mqttClient = mqttClient;
+        HA_COMMAND_TOPIC = mqttProperties.getHaTopic() + "/command";
+    }
 
 
     @PostConstruct
@@ -37,6 +46,9 @@ public class MqttReceiveService implements MqttCallback{
 
             mqttClient.subscribe(EW11_RECEIVE_TOPIC, 0);
             log.info("📥 MQTT 구독 완료: {}", EW11_RECEIVE_TOPIC);
+
+            mqttClient.subscribe(HA_COMMAND_TOPIC + "/#", 0);
+            log.info("📥 MQTT 구독 완료: {}", HA_COMMAND_TOPIC);
 
         } catch (MqttException e) {
             log.error("❌ MqttReceiveService 초기화 중 MQTT 오류 발생 (콜백 설정 또는 구독 실패)", e);
@@ -59,6 +71,7 @@ public class MqttReceiveService implements MqttCallback{
                 log.info("✅ MQTT 재연결 확인, 콜백 및 구독 재설정 시작");
                 mqttClient.setCallback(this);
                 mqttClient.subscribe(EW11_RECEIVE_TOPIC, 0);
+                mqttClient.subscribe(HA_COMMAND_TOPIC + "/#", 0);
                 log.info("📞 콜백 및 구독 재설정 완료: {}", EW11_RECEIVE_TOPIC);
 
             } catch (InterruptedException e) {
@@ -71,13 +84,15 @@ public class MqttReceiveService implements MqttCallback{
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-        switch (topic) {
-            case EW11_RECEIVE_TOPIC:
-                elfinReceiveService.publishCommax(message);
-                break;
-            default:
-                break;
-        }   
+        if (topic.equals(EW11_RECEIVE_TOPIC)) {
+            elfinReceiveService.publishDeviceState(message);
+        } else if (topic.startsWith(HA_COMMAND_TOPIC)) {
+            elfinCommandService.sendCommand(topic, message);
+        }else{
+            log.warn("⚠️ 알 수 없는 MQTT 토픽 수신: {}", topic);
+            log.debug("📥 수신된 메시지: {}", new String(message.getPayload()));
+        }
+        
     }
 
     @Override

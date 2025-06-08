@@ -25,9 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ElfinReceiveService { // orchestraction? 
+public class ElfinReceiveService {
 
-    // private final YamlPacketParser packetParser;
     private final PacketParser packetParser;
     private final MqttProperties mqttProperties;
     private final MqttSendService mqttSendService;
@@ -53,7 +52,7 @@ public class ElfinReceiveService { // orchestraction?
         mqttSendService.publish(mqttProperties.getHaTopic() + "/status", "offline", 1, true);
     }
 
-    public void publishCommax(MqttMessage message) {
+    public void publishDeviceState(MqttMessage message) {
         byte[] payloadBytes = message.getPayload();
         StringBuilder hexBuilder = new StringBuilder();
 
@@ -64,8 +63,6 @@ public class ElfinReceiveService { // orchestraction?
         String hexWithSpaces = hexBuilder.toString().trim();
         String hex = hexWithSpaces.replace(" ", "");
 
-        // log.info("\uD83D\uDCE9 MQTT 수신: {} → HEX: {}", "ew11/recv", hexWithSpaces);
-
         List<ParsedPacket> multiple = packetParser.parseMultiple(hex);
 
          for (ParsedPacket parsedPacket : multiple) {
@@ -73,11 +70,8 @@ public class ElfinReceiveService { // orchestraction?
             int deviceIndex = parsedPacket.getDeviceIndex();
             PacketKind kind = parsedPacket.getKind();
 
-            // log.info("📥 수신된 패킷: {} (index: {}, kind: {})", deviceType, deviceIndex, kind);
-            // log.info("패킷 정보: {} ", parsedPacket.getParsedState().toJson());
-
             if (kind == PacketKind.STATE) {
-                String uniqueId = "commax_" + deviceType + "_" + deviceIndex;
+                String uniqueId = mqttProperties.getHaTopic() + "_" + deviceType + "_" + deviceIndex;
 
                 if (!registeredDevices.containsKey(uniqueId)) {
                     try {
