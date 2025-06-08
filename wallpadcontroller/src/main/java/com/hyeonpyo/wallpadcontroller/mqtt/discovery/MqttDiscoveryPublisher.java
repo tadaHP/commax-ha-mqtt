@@ -59,15 +59,15 @@ public class MqttDiscoveryPublisher {
                 switch (device.getType()) {
                     case Light -> {
                         topic = DISCOVERY_PREFIX + "/light/" + baseId + "/config";
-                        payload.put("state_topic", HA_TOPIC + "/" + baseId + "/power/state");
-                        payload.put("command_topic", HA_TOPIC + "/" + baseId + "/power/command");
+                        payload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/power");
+                        payload.put("command_topic", HA_TOPIC + "/command/" + baseId + "/power");
                         payload.put("payload_on", "ON");
                         payload.put("payload_off", "OFF");
                     }
                     case LightBreaker, Outlet -> {
                         topic = DISCOVERY_PREFIX + "/switch/" + baseId + "/config";
-                        payload.put("state_topic", HA_TOPIC + "/" + baseId + "/power/state");
-                        payload.put("command_topic", HA_TOPIC + "/" + baseId + "/power/command");
+                        payload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/power");
+                        payload.put("command_topic", HA_TOPIC + "/command/" + baseId + "/power");
                         payload.put("payload_on", "ON");
                         payload.put("payload_off", "OFF");
                     
@@ -79,8 +79,8 @@ public class MqttDiscoveryPublisher {
                             ecoPayload.put("name", baseId + " 자동대기전력차단");
                             ecoPayload.put("object_id", objectId + "_ecomode");
                             ecoPayload.put("unique_id", uniqueId + "_ecomode");
-                            ecoPayload.put("state_topic", HA_TOPIC + "/" + baseId + "/ecomode/state");
-                            ecoPayload.put("command_topic", HA_TOPIC + "/" + baseId + "/ecomode/command");
+                            ecoPayload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/ecomode");
+                            ecoPayload.put("command_topic", HA_TOPIC + "/command/" + baseId + "/ecomode");
                             mqttClient.publish(ecoTopic, objectMapper.writeValueAsBytes(ecoPayload), 1, true);
                         
                             // cutoff value number
@@ -89,8 +89,8 @@ public class MqttDiscoveryPublisher {
                             cutoffPayload.put("name", baseId + " 자동대기전력차단값");
                             cutoffPayload.put("object_id", objectId + "_cutoff_value");
                             cutoffPayload.put("unique_id", uniqueId + "_cutoff_value");
-                            cutoffPayload.put("state_topic", HA_TOPIC + "/" + baseId + "/cutoff/state");
-                            cutoffPayload.put("command_topic", HA_TOPIC + "/" + baseId + "/setCutoff/command");
+                            cutoffPayload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/cutoff");
+                            cutoffPayload.put("command_topic", HA_TOPIC + "/command/" + baseId + "/setCutoff");
                             cutoffPayload.put("step", 1);
                             cutoffPayload.put("min", 0);
                             cutoffPayload.put("max", 500);
@@ -104,7 +104,7 @@ public class MqttDiscoveryPublisher {
                             wattPayload.put("name", baseId + " 소비전력");
                             wattPayload.put("object_id", objectId + "_watt");
                             wattPayload.put("unique_id", uniqueId + "_watt");
-                            wattPayload.put("state_topic", HA_TOPIC + "/" + baseId + "/watt/state");
+                            wattPayload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/watt");
                             wattPayload.put("unit_of_measurement", "W");
                             wattPayload.put("device_class", "power");
                             wattPayload.put("state_class", "measurement");
@@ -114,19 +114,19 @@ public class MqttDiscoveryPublisher {
                     case Fan -> {
                        topic = DISCOVERY_PREFIX + "/fan/" + baseId + "/config";
                         // 기본 전원 관련
-                        payload.put("state_topic", HA_TOPIC + "/" + baseId + "/power/state");
-                        payload.put("command_topic", HA_TOPIC + "/" + baseId + "/power/command");
+                        payload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/power");
+                        payload.put("command_topic", HA_TOPIC + "/command/" + baseId + "/power");
                         payload.put("payload_on", "ON");
                         payload.put("payload_off", "OFF");
 
                         // 팬 모드(preset_mode)를 normal/bypass로 사용
-                        payload.put("preset_mode_state_topic", HA_TOPIC + "/" + baseId + "/mode/state");
-                        payload.put("preset_mode_command_topic", HA_TOPIC + "/" + baseId + "/mode/command");
+                        payload.put("preset_mode_state_topic", HA_TOPIC + "/state/" + baseId + "/mode");
+                        payload.put("preset_mode_command_topic", HA_TOPIC + "/command/" + baseId + "/mode");
                         payload.put("preset_modes", List.of("NORMAL", "BYPASS"));
 
                         // 팬 속도는 percentage 기반으로 처리
-                        payload.put("percentage_state_topic", HA_TOPIC + "/" + baseId + "/speed/state");
-                        payload.put("percentage_command_topic", HA_TOPIC + "/" + baseId + "/speed/command");
+                        payload.put("percentage_state_topic", HA_TOPIC + "/state/" + baseId + "/speed");
+                        payload.put("percentage_command_topic", HA_TOPIC + "/command/" + baseId + "/speed");
                         payload.put("percentage_value_template", """
                           {% if value == 'LOW' %}
                             33
@@ -151,13 +151,12 @@ public class MqttDiscoveryPublisher {
                     }
                     case Thermo -> {
                         topic = DISCOVERY_PREFIX + "/climate/" + baseId + "/config";
-                        payload.put("current_temperature_topic", HA_TOPIC + "/" + baseId + "/curTemp/state");
-                        payload.put("temperature_command_topic", HA_TOPIC + "/" + baseId + "/setTemp/command");
-                        payload.put("temperature_state_topic", HA_TOPIC + "/" + baseId + "/setTemp/state");
-                        payload.put("mode_command_topic", HA_TOPIC + "/" + baseId + "/power/command");
-                        payload.put("mode_state_topic", HA_TOPIC + "/" + baseId + "/power/state");
-                        payload.put("action_topic", HA_TOPIC + "/" + baseId + "/action/state");
-                        payload.put("action_template", "{% if value == 'OFF' %}OFF{% elif value == 'IDLE' %}IDLE{% elif value == 'HEATING' %}HEATING{% endif %}");
+                        payload.put("current_temperature_topic", HA_TOPIC + "/state/" + baseId + "/curTemp");
+                        payload.put("temperature_state_topic", HA_TOPIC + "/state/" + baseId + "/setTemp");
+                        payload.put("temperature_command_topic", HA_TOPIC + "/command/" + baseId + "/setTemp");
+                        payload.put("mode_state_topic", HA_TOPIC + "/state/" + baseId + "/mode");
+                        payload.put("mode_command_topic", HA_TOPIC + "/command/" + baseId + "/mode");
+                        payload.put("action_topic", HA_TOPIC + "/state/" + baseId + "/action");
                         payload.put("modes", List.of("off", "heat"));
                         payload.put("temperature_unit", "C");
                         payload.put("min_temp", 5);
@@ -167,7 +166,7 @@ public class MqttDiscoveryPublisher {
                     case Gas -> {
                         // button
                         topic = DISCOVERY_PREFIX + "/button/" + baseId + "/config";
-                        payload.put("command_topic", HA_TOPIC + "/" + baseId + "/button/command");
+                        payload.put("command_topic", HA_TOPIC + "/command/" + baseId + "/button");
                         payload.put("payload_press", "PRESS");
                     
                         // binary_sensor
@@ -176,7 +175,7 @@ public class MqttDiscoveryPublisher {
                         binPayload.put("name", "가스밸브 " + device.getIndex());
                         binPayload.put("object_id", objectId + "_valve");
                         binPayload.put("unique_id", uniqueId + "_valve");
-                        binPayload.put("state_topic", HA_TOPIC + "/" + baseId + "/power/state");
+                        binPayload.put("state_topic", HA_TOPIC + "/state/" + baseId + "/power");
                         binPayload.put("payload_on", "ON");
                         binPayload.put("payload_off", "OFF");
                         mqttClient.publish(binTopic, objectMapper.writeValueAsBytes(binPayload), 1, true);

@@ -8,7 +8,6 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
 
 import com.hyeonpyo.wallpadcontroller.elfin.ElfinReceiveService;
-import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
