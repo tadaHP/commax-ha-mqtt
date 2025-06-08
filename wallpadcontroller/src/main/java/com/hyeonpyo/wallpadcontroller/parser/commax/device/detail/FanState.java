@@ -1,20 +1,27 @@
 package com.hyeonpyo.wallpadcontroller.parser.commax.device.detail;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class FanState implements DeviceState {
-    private String speed;
-    private String mode;
+    private final String speed;
+    private final String mode;
     private final String power;
+
+    public FanState(String speed, String mode) {
+        this.speed = speed;
+        this.mode = mode;
+        if(mode == null || mode.isEmpty()) {
+            this.power = "OFF";
+        } else {
+            this.power = mode.equals("OFF") ? "OFF" : "ON";
+        }
+    }
 
 
     @Override
