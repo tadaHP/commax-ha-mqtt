@@ -1,4 +1,4 @@
-package com.hyeonpyo.wallpadcontroller.parser;
+package com.hyeonpyo.wallpadcontroller.domain.builder;
 
 import java.util.HashMap;
 import java.util.List;
@@ -99,4 +99,5 @@ public class CommandPacketBuilder {
         }
         return (byte) (sum & 0xFF);
     }
+
 }

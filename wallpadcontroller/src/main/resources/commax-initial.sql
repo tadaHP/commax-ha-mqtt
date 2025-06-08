@@ -122,7 +122,7 @@ INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (89, 13, 5,
 INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (90, 13, 6, 'empty');
 INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (91, 13, 7, 'checksum');
 INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (92, 14, 1, 'deviceId');
-INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (93, 14, 2, 'requrestType');
+INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (93, 14, 2, 'requestType');
 INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (94, 14, 3, 'empty');
 INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (95, 14, 4, 'empty');
 INSERT INTO packet_field (id, packet_type_id, position, name) VALUES (96, 14, 5, 'empty');
