@@ -197,7 +197,7 @@ INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES 
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (23, 50, 'id', 'FF', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (24, 57, 'idle', '81', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (25, 57, 'heating', '83', '');
-INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (26, 57, 'OFF', '00', '');
+INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (26, 57, 'off', '00', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (27, 58, 'id', 'FF', '');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (28, 59, 'currentTemp', 'FF', '16진수가 아닌 10진수 그대로 (24도면 24)');
 INSERT INTO packet_field_value (id, packet_field_id, raw_key, hex, memo) VALUES (29, 60, 'targetTemp', 'FF', '16진수가 아닌 10진수 그대로 (24도면 24)');
