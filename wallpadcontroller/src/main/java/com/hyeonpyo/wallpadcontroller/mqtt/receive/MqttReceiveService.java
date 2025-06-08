@@ -18,8 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class MqttReceiveService implements MqttCallback{
-
-    private final MqttProperties mqttProperties;
     private final String EW11_RECEIVE_TOPIC = "ew11/recv";
     private final ElfinReceiveService elfinReceiveService;
     
@@ -51,7 +49,25 @@ public class MqttReceiveService implements MqttCallback{
     @Override
     public void connectionLost(Throwable cause) {
         log.warn("⚠️ MQTT 연결 끊김: {}", cause.getMessage(), cause);
-        // TODO: 추후 재 구독 처리 필요
+
+        new Thread(() -> {
+            try {
+                while (!mqttClient.isConnected()) {
+                    log.info("⏳ MQTT 재연결 대기 중...");
+                    Thread.sleep(1000);
+                }
+
+                log.info("✅ MQTT 재연결 확인, 콜백 및 구독 재설정 시작");
+                mqttClient.setCallback(this);
+                mqttClient.subscribe(EW11_RECEIVE_TOPIC, 0);
+                log.info("📞 콜백 및 구독 재설정 완료: {}", EW11_RECEIVE_TOPIC);
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (MqttException e) {
+                log.error("❌ MQTT 콜백/구독 재설정 실패", e);
+            }
+        }).start();
     }
 
     @Override

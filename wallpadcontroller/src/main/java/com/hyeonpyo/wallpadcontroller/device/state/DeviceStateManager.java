@@ -1,5 +1,7 @@
 package com.hyeonpyo.wallpadcontroller.device.state;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -8,8 +10,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketField;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketFieldValue;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
+import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
 import com.hyeonpyo.wallpadcontroller.mqtt.sender.MqttSendService;
-import com.hyeonpyo.wallpadcontroller.parser.DeviceStructureLoader;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PostConstruct;
@@ -24,8 +30,6 @@ public class DeviceStateManager {
 
     private final MqttSendService mqttSendService;
     private final MqttProperties mqttProperties;
-    private final DeviceStructureLoader structureLoader;
-
 
     private final Map<String, String> latestState = new ConcurrentHashMap<>();
     private final Map<String, String> lastPublishedState = new ConcurrentHashMap<>();
@@ -47,15 +51,14 @@ public class DeviceStateManager {
             }
         }, 0, 1, TimeUnit.SECONDS);
     }
-
+    
     public void updateState(String deviceName, int deviceIndex, Map<String, String> stateMap) {
         for (Map.Entry<String, String> entry : stateMap.entrySet()) {
             String field = entry.getKey();
             String hexValue = entry.getValue();
             String key = makeKey(deviceName, deviceIndex, field);
-            String readableValue = convertToReadableState(deviceName, field, hexValue);
-            if (readableValue != null && !"null".equalsIgnoreCase(readableValue)) {
-                latestState.put(key, readableValue);
+            if (hexValue != null && !"null".equalsIgnoreCase(hexValue)) {
+                latestState.put(key, hexValue); // 이미 readable한 값임
             }
         }
     }
@@ -68,89 +71,6 @@ public class DeviceStateManager {
         };
         return fullName + "/" + field + suffix;
     }
-
-    private String convertToReadableState(String deviceName, String field, String value) {
-        Object deviceObj = structureLoader.getDeviceStructure().get(deviceName);
-        if (!(deviceObj instanceof Map<?, ?> device)) return value;
-
-        Object stateObj = device.get("state");
-        if (!(stateObj instanceof Map<?, ?> statePacket)) return value;
-
-        Object structureObj = statePacket.get("structure");
-        if (!(structureObj instanceof Map<?, ?> structure)) return value;
-
-        for (Map.Entry<?, ?> entry : structure.entrySet()) {
-            Object fieldMapObj = entry.getValue();
-            if (!(fieldMapObj instanceof Map<?, ?> fieldMap)) continue;
-
-            Object fieldNameObj = fieldMap.get("name");
-            if (!(fieldNameObj instanceof String fieldName)) continue;
-
-            if (!fieldName.equals(field)) continue;
-
-            Object valuesObj = fieldMap.get("values");
-            if (!(valuesObj instanceof Map<?, ?> values)) continue;
-
-            for (Map.Entry<?, ?> valueEntry : values.entrySet()) {
-                if (!(valueEntry.getKey() instanceof String rawKey)) continue;
-                if (!(valueEntry.getValue() instanceof String hexValue)) continue;
-
-                if (hexValue.equalsIgnoreCase(value)) {
-                    return normalizeValue(deviceName, field, rawKey);
-                }
-            }
-        }
-
-        return normalizeValue(deviceName, field, value);
-    }
-
-    private String normalizeValue(String deviceName, String field, String rawKey) {
-        switch (deviceName) {
-            case "Thermo":
-                if ("power".equals(field)) {
-                    return switch (rawKey) {
-                        case "idle", "heating" -> "heat";
-                        case "off" -> "off";
-                        default -> rawKey;
-                    };
-                } else if ("action".equals(field)) {
-                    return switch (rawKey) {
-                        case "idle" -> "idle";
-                        case "heating" -> "heating";
-                        case "off" -> "off";
-                        default -> rawKey;
-                    };
-                } else {
-                    return rawKey;
-                }
-
-            case "Fan":
-                if ("power".equals(field)) {
-                    return switch (rawKey.toLowerCase()) {
-                        case "off" -> "OFF";
-                        case "normal", "bypass" -> "ON";
-                        default -> "OFF";
-                    };
-                } else {
-                    return rawKey;
-                }
-
-            case "Light", "LightBreaker", "Outlet":
-                if ("power".equals(field)) {
-                    return switch (rawKey) {
-                        case "on" -> "ON";
-                        case "off" -> "OFF";
-                        default -> rawKey;
-                    };
-                } else {
-                    return rawKey;
-                }
-
-            default:
-                return rawKey;
-        }
-    }
-
 
     @PreDestroy
     public void shutdown() {
