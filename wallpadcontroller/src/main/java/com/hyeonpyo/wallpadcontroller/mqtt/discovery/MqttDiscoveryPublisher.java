@@ -141,15 +141,16 @@ public class MqttDiscoveryPublisher {
                           {% endif %}
                           """);
 
-                      payload.put("percentage_command_template", """
-                          {% if value | int <= 33 %}
-                            LOW
-                          {% elif value | int <= 66 %}
-                            MEDIUM
-                          {% else %}
-                            HIGH
-                          {% endif %}
-                          """);
+payload.put("percentage_command_template", """
+  {% set v = value | int %}
+  {% if v <= 49 %}
+    LOW
+  {% elif v <= 82 %}
+    MEDIUM
+  {% else %}
+    HIGH
+  {% endif %}
+""");
                     }
                     case Thermo -> {
                         topic = DISCOVERY_PREFIX + "/climate/" + baseId + "/config";

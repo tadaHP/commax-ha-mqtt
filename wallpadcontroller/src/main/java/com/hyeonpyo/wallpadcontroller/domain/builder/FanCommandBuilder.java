@@ -13,13 +13,22 @@ public class FanCommandBuilder implements CommandBuilder {
 
     private final CommandPacketBuilder baseBuilder;
 
+    @Override
     public Optional<byte[]> build(String type, int index, String field, String payload) {
-        if ("power".equalsIgnoreCase(field) || "mode".equalsIgnoreCase(field)) {
-            return baseBuilder.build(type, index, Map.of(
-                "commandType", "power",
-                "value", payload
-            ));
+        switch (field.toLowerCase()) {
+            case "power":
+            case "mode":
+                return baseBuilder.build(type, index, Map.of(
+                    "commandType", "power",
+                    "value", payload
+                ));
+            case "speed":
+                return baseBuilder.build(type, index, Map.of(
+                    "commandType", "setSpeed",
+                    "value", payload.toUpperCase()
+                ));
+            default:
+                return Optional.empty();
         }
-        return Optional.empty();
     }
 }
