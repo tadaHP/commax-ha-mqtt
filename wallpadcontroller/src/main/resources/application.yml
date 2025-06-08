@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: Wallpadcontroller
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update 
+    open-in-view: false
+  datasource:
+    url: jdbc:sqlite:./mydb.db
+    driver-class-name: org.sqlite.JDBC
+
+mqtt:
+  broker: tcp://192.168.50.192:1883
+  client-id: wallpad-controller
+  username: hyeonpyo
+  password: J7QNgG6ta4%3OC,+U
+  ha-topic: commax

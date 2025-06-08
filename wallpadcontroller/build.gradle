@@ -1,0 +1,48 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.hyeonpyo'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+
+	implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5' // MQTT용
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.xerial:sqlite-jdbc:3.49.1.0'
+	implementation 'org.hibernate.orm:hibernate-community-dialects:7.0.0.Final'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
