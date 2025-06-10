@@ -17,7 +17,6 @@ public class FanCommandBuilder implements CommandBuilder {
     public Optional<byte[]> build(String type, int index, String field, String payload) {
         switch (field.toLowerCase()) {
             case "power":
-            case "mode":
                 return baseBuilder.build(type, index, Map.of(
                     "commandType", "power",
                     "value", payload

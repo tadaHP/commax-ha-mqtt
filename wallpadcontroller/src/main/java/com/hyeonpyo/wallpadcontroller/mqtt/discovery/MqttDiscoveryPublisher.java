@@ -123,7 +123,7 @@ public class MqttDiscoveryPublisher {
 
                         // 팬 모드(preset_mode)를 normal/bypass로 사용
                         payload.put("preset_mode_state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/mode");
-                        payload.put("preset_mode_command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/mode");
+                        payload.put("preset_mode_command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/power");
                         payload.put("preset_modes", List.of("NORMAL", "BYPASS"));
 
                         // 팬 속도는 percentage 기반으로 처리
@@ -141,16 +141,16 @@ public class MqttDiscoveryPublisher {
                           {% endif %}
                           """);
 
-payload.put("percentage_command_template", """
-  {% set v = value | int %}
-  {% if v <= 49 %}
-    LOW
-  {% elif v <= 82 %}
-    MEDIUM
-  {% else %}
-    HIGH
-  {% endif %}
-""");
+                        payload.put("percentage_command_template", """
+                          {% set v = value | int %}
+                          {% if v <= 49 %}
+                            LOW
+                          {% elif v <= 82 %}
+                            MEDIUM
+                          {% else %}
+                            HIGH
+                          {% endif %}
+                        """);
                     }
                     case Thermo -> {
                         topic = DISCOVERY_PREFIX + "/climate/" + baseId + "/config";
