@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketField;
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketFieldValue;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingField;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingFieldValue;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
 
@@ -27,7 +27,7 @@ public class CommandPacketBuilder {
 
     private final Map<String, Map<String, String>> fieldValueMap = new HashMap<>();
     private final Map<String, PacketType> commandPacketMap = new HashMap<>();
-    private final Map<String, Map<Integer, PacketField>> fieldPositionMap = new HashMap<>();
+    private final Map<String, Map<Integer, ParsingField>> fieldPositionMap = new HashMap<>();
 
     private final int PACKET_LENGTH = 8;
 
@@ -43,14 +43,14 @@ public class CommandPacketBuilder {
                 String key = deviceName.toLowerCase();
                 commandPacketMap.put(key, packet);
 
-                Map<Integer, PacketField> fieldsByPos = new HashMap<>();
-                for (PacketField field : packet.getFields()) {
+                Map<Integer, ParsingField> fieldsByPos = new HashMap<>();
+                for (ParsingField field : packet.getFields()) {
                     fieldsByPos.put(field.getPosition(), field);
                     if (field.getValueMappings() != null && field.getName() != null) {
                         fieldValueMap
                             .computeIfAbsent(field.getName(), k -> new HashMap<>())
                             .putAll(field.getValueMappings().stream()
-                                .collect(Collectors.toMap(PacketFieldValue::getRawKey, PacketFieldValue::getHex)));
+                                .collect(Collectors.toMap(ParsingFieldValue::getRawKey, ParsingFieldValue::getHex)));
                     }
                 }
                 fieldPositionMap.put(key, fieldsByPos);
@@ -71,9 +71,9 @@ public class CommandPacketBuilder {
         byte[] bytes = new byte[PACKET_LENGTH];
         bytes[0] = (byte) Integer.parseInt(packet.getHeader(), 16);
 
-        Map<Integer, PacketField> fields = fieldPositionMap.get(key);
+        Map<Integer, ParsingField> fields = fieldPositionMap.get(key);
         for (int i = 1; i < PACKET_LENGTH - 1; i++) {
-            PacketField field = fields.get(i);
+            ParsingField field = fields.get(i);
             if (field == null || "empty".equals(field.getName())) {
                 bytes[i] = 0x00;
                 continue;

@@ -18,17 +18,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "packet_field_value")
+@Table(name = "parsing_field_value")
 @Getter
-public class PacketFieldValue {
+public class ParsingFieldValue {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "packet_field_id")
-    private PacketField packetField;
+    @JoinColumn(name = "parsing_field_id")
+    private ParsingField parsingField;
 
     @Column(name = "raw_key")
     private String rawKey;
