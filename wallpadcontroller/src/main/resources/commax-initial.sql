@@ -262,3 +262,63 @@ INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUE
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (88, 134, 'ON', '01', 'power로 추정됨..');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (89, 135, 'id', 'FF', '기기 번호로 추정됨..');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 136, 'floor', 'FF', '층으로 추정됨..');
+
+-- command_mapping_rule
+-- Light
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (1, 1, 'power', 'ON', 'light_power_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (2, 1, 'power', 'OFF', 'light_power_off');
+
+-- LightBreaker
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (3, 2, 'power', 'ON', 'lightbreaker_power_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (4, 2, 'power', 'OFF', 'lightbreaker_power_off');
+
+-- Thermo
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (5, 3, 'power', 'ON', 'thermo_power_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (6, 3, 'power', 'OFF', 'thermo_power_off');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (7, 3, 'setTemp', NULL, 'thermo_target');
+
+-- Fan
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (8, 6, 'power', 'ON', 'fan_power_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (9, 6, 'power', 'OFF', 'fan_power_off');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (10, 6, 'speed', 'LOW', 'fan_speed_low');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (11, 6, 'speed', 'MEDIUM', 'fan_speed_medium');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (12, 6, 'speed', 'HIGH', 'fan_speed_high');
+
+-- command_mapping_detail
+-- Light (ON)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (1, 'power', 'ON', false);
+-- Light (OFF)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (2, 'power', 'OFF', false);
+
+-- LightBreaker (ON)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (3, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (3, 'power', 'ON', false);
+-- LightBreaker (OFF)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (4, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (4, 'power', 'OFF', false);
+
+-- Thermo (ON)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (5, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (5, 'value', 'ON', false);
+-- Thermo (OFF)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (6, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (6, 'value', 'OFF', false);
+-- Thermo (target)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (7, 'commandType', 'change', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (7, 'value', NULL, true);
+
+-- Fan (power ON)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (8, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (8, 'value', 'ON', false);
+-- Fan (power OFF)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (9, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (9, 'value', 'OFF', false);
+-- Fan (speed LOW)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (10, 'commandType', 'setSpeed', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (10, 'value', 'LOW', false);
+-- Fan (speed MEDIUM)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (11, 'commandType', 'setSpeed', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (11, 'value', 'MEDIUM', false);
+-- Fan (speed HIGH)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (12, 'commandType', 'setSpeed', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (12, 'value', 'HIGH', false);
