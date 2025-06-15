@@ -1,6 +1,5 @@
 package com.hyeonpyo.wallpadcontroller.mqtt.sender;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MqttPublisherWorker {
+public class MqttPublishWorker {
 
     private final MqttClient mqttClient;
     private final BlockingQueue<MqttPendingMessage> queue = new LinkedBlockingQueue<>();
@@ -50,7 +49,7 @@ public class MqttPublisherWorker {
             if (msg == null) return; // 보낼 메시지가 없음
 
             if (mqttClient.isConnected()) {
-                MqttMessage mqttMessage = new MqttMessage(msg.payload().getBytes(StandardCharsets.UTF_8));
+                MqttMessage mqttMessage = new MqttMessage(msg.payload());
                 mqttMessage.setQos(msg.qos());
                 mqttMessage.setRetained(msg.retained());
 

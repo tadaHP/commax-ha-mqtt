@@ -19,7 +19,7 @@ public class FanState implements DeviceState {
         if(mode == null || mode.isEmpty()) {
             this.power = "OFF";
         } else {
-            this.power = mode.equals("OFF") ? "OFF" : "ON";
+            this.power = mode.equals("off") ? "OFF" : "ON";
         }
     }
 

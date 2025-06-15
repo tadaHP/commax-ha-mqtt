@@ -1,9 +1,10 @@
 package com.hyeonpyo.wallpadcontroller.domain.definition.entity;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -17,28 +18,35 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Entity
-@Table(name = "packet_type")
+@Table(name = "command_mapping_rule")
 @Getter
-public class PacketType {
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CommandMappingRule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_type_id")
+    @JoinColumn(name = "device_type_id", nullable = false)
     private DeviceType deviceType;
 
-    private String kind;   // 예: command, state, state_request, ack
+    @Column(name = "external_field", nullable = false)
+    private String externalField;
 
-    private String header;
+    @Column(name = "external_payload")
+    private String externalPayload;
 
-    @OneToMany(mappedBy = "packetType", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "rule_name", nullable = false)
+    private String ruleName;
+
     @Builder.Default
-    private Set<ParsingField> fields = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CommandMappingDetail> details = new ArrayList<>();
 }

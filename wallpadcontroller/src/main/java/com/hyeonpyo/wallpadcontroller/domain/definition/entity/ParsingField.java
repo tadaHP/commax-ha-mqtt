@@ -22,9 +22,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "packet_field")
+@Table(name = "parsing_field")
 @Getter
-public class PacketField {
+public class ParsingField {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +38,7 @@ public class PacketField {
 
     private String name;
 
-    @OneToMany(mappedBy = "packetField", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "parsingField", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private Set<PacketFieldValue> valueMappings = new LinkedHashSet<>();
+    private Set<ParsingFieldValue> valueMappings = new LinkedHashSet<>();
 }
