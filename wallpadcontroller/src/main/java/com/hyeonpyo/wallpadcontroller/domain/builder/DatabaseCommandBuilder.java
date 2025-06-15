@@ -72,24 +72,35 @@ public class DatabaseCommandBuilder implements CommandBuilder {
     // 내부 필드 → hex 값 매핑
     private String resolveHexValue(ParsingField field, CommandMappingRule rule, String payload, int deviceIndex) {
         String fieldName = field.getName();
-
+        
         // deviceId 필드는 따로 index 사용
         if (fieldName.equals("deviceId")) {
             return String.format("%02X", deviceIndex);
         }
-
+    
         // rule 기반 내부 필드값 조회
         Optional<CommandMappingDetail> detailOpt = rule.getDetails().stream()
                 .filter(d -> d.getInternalField().equals(fieldName))
                 .findFirst();
-
+    
         if (detailOpt.isPresent()) {
             CommandMappingDetail detail = detailOpt.get();
-            String rawKey = detail.isDirect() ? payload : detail.getInternalValue();
+        
+            if (detail.isDirect()) {
+                if (fieldName.equals("value")) {
+                    int intValue = (int) Double.parseDouble(payload);
+                    return Integer.toString(intValue); // payload 그대로 넣을땐 10진수로 변환
+                } else {
+                    return payload;
+                }
+            }
+        
+            // 일반 매핑 처리
+            String rawKey = detail.getInternalValue();
             return parsingFieldValueRepository.findHexByParsingFieldAndRawKey(field, rawKey)
                     .orElse("00");
         }
-
+    
         // rule에 정의되지 않은 필드면 default 00
         return "00";
     }

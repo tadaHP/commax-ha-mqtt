@@ -275,8 +275,8 @@ INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_p
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (4, 2, 'power', 'OFF', 'lightbreaker_power_off');
 
 -- Thermo
-INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (5, 3, 'power', 'ON', 'thermo_power_on');
-INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (6, 3, 'power', 'OFF', 'thermo_power_off');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (5, 3, 'mode', 'heat', 'thermo_power_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (6, 3, 'mode', 'off', 'thermo_power_off');
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (7, 3, 'setTemp', NULL, 'thermo_target');
 
 -- Fan

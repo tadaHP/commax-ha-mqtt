@@ -16,7 +16,7 @@ public interface CommandMappingRuleRepository extends JpaRepository<CommandMappi
         LEFT JOIN FETCH r.details d
         WHERE dt.name = :type
           AND r.externalField = :field
-          AND (:payload IS NULL OR r.externalPayload = :payload)
+          AND (r.externalPayload = :payload OR r.externalPayload IS NULL)
     """)
     Optional<CommandMappingRule> findWithDetailsByDeviceTypeNameAndExternalFieldAndExternalPayload(
             @Param("type") String type,
