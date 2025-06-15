@@ -240,28 +240,30 @@ INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUE
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (66, 107, 'power', '01', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (67, 107, 'setSpeed', '02', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (68, 108, 'OFF', '00', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (69, 108, 'LOW', '01', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (70, 108, 'MEDIUM', '02', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (71, 108, 'HIGH', '03', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (72, 108, 'ON', '04', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (73, 113, 'id', 'FF', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (74, 120, 'NORMAL', '02', '최초 실행시 02');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (75, 120, 'NORMAL', '04', 'bypass에서 다시 변경시 04');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (76, 120, 'BYPASS', '07', '명령에 없는 night, auto가 존재한다고함.');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (77, 120, 'off', '00', '명령에 없는 night, auto가 존재한다고함.');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (78, 121, 'id', 'FF', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (79, 122, 'OFF', '00', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (80, 122, 'LOW', '01', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (81, 122, 'MEDIUM', '02', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (82, 122, 'HIGH', '03', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (83, 127, 'id', 'FF', '기기 번호로 추정됨..  EV의 헤더는 A0로 동일, 추후 확인후 해야함');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (84, 128, 'ON', '01', '추정됨..');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (85, 129, 'fixed', '00', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (86, 130, 'fixed', '08', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (87, 131, 'fixed', '15', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (88, 134, 'ON', '01', 'power로 추정됨..');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (89, 135, 'id', 'FF', '기기 번호로 추정됨..');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 136, 'floor', 'FF', '층으로 추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (69, 108, 'NORMAL', '04', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (70, 108, 'BYPASS', '07', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (71, 108, 'ON', '04', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (72, 108, 'LOW', '01', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (73, 108, 'MEDIUM', '02', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (74, 108, 'HIGH', '03', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (75, 113, 'id', 'FF', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (76, 120, 'NORMAL', '02', '최초 실행시 02');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (77, 120, 'NORMAL', '04', 'bypass에서 다시 변경시 04');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (78, 120, 'BYPASS', '07', '명령에 없는 night, auto가 존재한다고함.');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (79, 120, 'off', '00', '명령에 없는 night, auto가 존재한다고함.');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (80, 121, 'id', 'FF', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (81, 122, 'OFF', '00', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (82, 122, 'LOW', '01', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (83, 122, 'MEDIUM', '02', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (84, 122, 'HIGH', '03', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (85, 127, 'id', 'FF', '기기 번호로 추정됨..  EV의 헤더는 A0로 동일, 추후 확인후 해야함');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (86, 128, 'ON', '01', '추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (87, 129, 'fixed', '00', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (88, 130, 'fixed', '08', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (89, 131, 'fixed', '15', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'ON', '01', 'power로 추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (91, 135, 'id', 'FF', '기기 번호로 추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (92, 136, 'floor', 'FF', '층으로 추정됨..');
 
 -- command_mapping_rule
 -- Light
@@ -283,10 +285,11 @@ INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_p
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (10, 6, 'speed', 'LOW', 'fan_speed_low');
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (11, 6, 'speed', 'MEDIUM', 'fan_speed_medium');
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (12, 6, 'speed', 'HIGH', 'fan_speed_high');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (14, 6, 'power', 'NORMAL', 'fan_mode_normal');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (15, 6, 'power', 'BYPASS', 'fan_mode_bypass');
 
 -- Gas ON
-INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name)
-VALUES (13, 4, 'button', 'PRESS', 'gas_button_press');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (13, 4, 'button', 'PRESS', 'gas_button_press');
 
 -- command_mapping_detail
 -- Light (ON)
@@ -326,6 +329,14 @@ INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_
 -- Fan (speed HIGH)
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (12, 'commandType', 'setSpeed', false);
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (12, 'value', 'HIGH', false);
+
+-- Fan (NORMAL)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (14, 'value', 'NORMAL', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (14, 'commandType', 'power', false);
+
+-- Fan (BYPASS)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (15, 'value', 'BYPASS', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (15, 'commandType', 'power', false);
 
 -- Gas (ON)
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (13, 'power', 'ON', false);
