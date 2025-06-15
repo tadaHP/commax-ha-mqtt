@@ -208,7 +208,7 @@ INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUE
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (34, 66, 'currentTemp', 'FF', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (35, 67, 'targetTemp', 'FF', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (36, 71, 'id', 'FF', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (37, 72, 'OFF', '80', '');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (37, 72, 'ON', '80', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (38, 78, 'ON', 'A0', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (39, 78, 'OFF', '50', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (40, 79, 'ON', 'A0', '');
@@ -284,6 +284,10 @@ INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_p
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (11, 6, 'speed', 'MEDIUM', 'fan_speed_medium');
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (12, 6, 'speed', 'HIGH', 'fan_speed_high');
 
+-- Gas ON
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name)
+VALUES (13, 4, 'button', 'PRESS', 'gas_button_press');
+
 -- command_mapping_detail
 -- Light (ON)
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (1, 'power', 'ON', false);
@@ -322,3 +326,6 @@ INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_
 -- Fan (speed HIGH)
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (12, 'commandType', 'setSpeed', false);
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (12, 'value', 'HIGH', false);
+
+-- Gas (ON)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (13, 'power', 'ON', false);
