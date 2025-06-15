@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MqttSendService {
 
-    private final MqttPublisherWorker mqttPublisherWorker;
+    private final MqttPublishWorker mqttPublisherWorker;
 
     public void publish(String topic, String payload, int qos) {
         this.publish(topic, payload, qos, false);
@@ -28,6 +28,14 @@ public class MqttSendService {
             return;
         }
 
+        mqttPublisherWorker.enqueue(new MqttPendingMessage(topic, payload, qos, retained));
+    }
+
+    public void publish(String topic, byte[] payload, int qos, boolean retained) {
+        if (topic == null || topic.trim().isEmpty()) {
+            log.warn("⚠️ MQTT 발행 실패: 토픽이 null이거나 비어있습니다.");
+            return;
+        }
         mqttPublisherWorker.enqueue(new MqttPendingMessage(topic, payload, qos, retained));
     }
 }

@@ -1,7 +1,5 @@
 package com.hyeonpyo.wallpadcontroller.device.state;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -10,11 +8,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketField;
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketFieldValue;
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
-import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
 import com.hyeonpyo.wallpadcontroller.mqtt.sender.MqttSendService;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
@@ -65,11 +58,7 @@ public class DeviceStateManager {
 
     private String makeKey(String deviceName, int deviceIndex, String field) {
         String fullName = deviceName + deviceIndex;
-        String suffix = switch (field) {
-            case "power", "action", "curTemp", "setTemp", "mode", "speed" -> "/state";
-            default -> "";
-        };
-        return fullName + "/" + field + suffix;
+        return "state/" + fullName + "/" + field;
     }
 
     @PreDestroy

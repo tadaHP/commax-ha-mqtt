@@ -1,9 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.domain.definition.entity;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -11,34 +8,37 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Entity
-@Table(name = "packet_type")
+@Table(name = "command_mapping_detail")
 @Getter
-public class PacketType {
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CommandMappingDetail {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_type_id")
-    private DeviceType deviceType;
+    @JoinColumn(name = "rule_id", nullable = false)
+    private CommandMappingRule rule;
 
-    private String kind;   // 예: command, state, state_request, ack
+    @Column(name = "internal_field", nullable = false)
+    private String internalField;
 
-    private String header;
+    @Column(name = "internal_value")
+    private String internalValue;
 
-    @OneToMany(mappedBy = "packetType", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private Set<ParsingField> fields = new LinkedHashSet<>();
+    @Column(name = "is_direct", nullable = false)
+    private boolean isDirect;
 }
+
