@@ -11,7 +11,8 @@ spring:
     driver-class-name: org.sqlite.JDBC
 
 mqtt:
-  broker: tcp://192.168.50.192:1883
+  host: 192.168.50.192
+  port: 1883
   client-id: wallpad-controller
   username: hyeonpyo
   password: J7QNgG6ta4%3OC,+U
