@@ -21,8 +21,12 @@ public class MqttClientConfig {
             MqttClient client = new MqttClient(brokerUrl, mqttProperties.getClientId(), new MemoryPersistence());
             MqttConnectOptions options = new MqttConnectOptions();
             options.setCleanSession(true);
-            options.setUserName(mqttProperties.getUsername());
-            options.setPassword(mqttProperties.getPassword().toCharArray());
+            if (mqttProperties.getUsername() != null && !mqttProperties.getUsername().isBlank()) {
+                options.setUserName(mqttProperties.getUsername());
+            }
+            if (mqttProperties.getPassword() != null && !mqttProperties.getPassword().isBlank()) {
+                options.setPassword(mqttProperties.getPassword().toCharArray());
+            }
             options.setAutomaticReconnect(true);
 
             log.info("⌛ MQTT 브로커 연결 시도 중: {}", brokerUrl);
