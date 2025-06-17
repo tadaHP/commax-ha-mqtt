@@ -9,11 +9,3 @@ spring:
   datasource:
     url: jdbc:sqlite:./mydb.db
     driver-class-name: org.sqlite.JDBC
-
-mqtt:
-  host: 192.168.50.192
-  port: 1883
-  client-id: wallpad-controller
-  username: hyeonpyo
-  password: J7QNgG6ta4%3OC,+U
-  ha-topic: commax
