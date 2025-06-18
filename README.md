@@ -30,6 +30,32 @@ services:
 
 위 내용중 환경변수에 맞게 채워넣으시면 작동하며, 빈값은 옵션입니다.
 
+
+최초 실행시 initail.sql이 작동해야 합니다.
+```sh
+wallpadcontroller-1  | 2025-06-18T16:20:40.752Z  INFO 1 --- [Wallpadcontroller] [           main] c.h.w.initializer.StartUpRunner          : 🧩 device_type 비어 있음. commax-initial.sql 실행 시작
+wallpadcontroller-1  | 2025-06-18T16:20:42.826Z  INFO 1 --- [Wallpadcontroller] [           main] c.h.w.initializer.StartUpRunner          : ✅ commax-initial.sql 실행 완료
+```
+위와 같은 로그가 찍히고 나면, docker컨테이너를 재실행해 주시면
+
+```sh
+wallpadcontroller-1  | 2025-06-18T16:22:26.316Z  INFO 1 --- [Wallpadcontroller] [           main] c.h.w.initializer.StartUpRunner          : ✅ 기존 device_type 데이터가 존재합니다. 초기화 스킵.
+wallpadcontroller-1  | 2025-06-18T16:22:26.525Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Thermo_1 (index: 1)
+wallpadcontroller-1  | 2025-06-18T16:22:26.532Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Thermo_2 (index: 2)
+wallpadcontroller-1  | 2025-06-18T16:22:26.539Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Thermo_3 (index: 3)
+wallpadcontroller-1  | 2025-06-18T16:22:26.546Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Thermo_4 (index: 4)
+wallpadcontroller-1  | 2025-06-18T16:22:26.807Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Fan_1 (index: 1)
+wallpadcontroller-1  | 2025-06-18T16:22:26.906Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Outlet_1 (index: 1)
+wallpadcontroller-1  | 2025-06-18T16:22:27.108Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Outlet_2 (index: 2)
+wallpadcontroller-1  | 2025-06-18T16:22:27.511Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_LightBreaker_1 (index: 1)
+wallpadcontroller-1  | 2025-06-18T16:22:28.315Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Light_1 (index: 1)
+wallpadcontroller-1  | 2025-06-18T16:22:28.412Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Light_2 (index: 2)
+wallpadcontroller-1  | 2025-06-18T16:22:28.515Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Light_3 (index: 3)
+wallpadcontroller-1  | 2025-06-18T16:22:28.611Z  INFO 1 --- [Wallpadcontroller] [lpad-controller] c.h.w.elfin.ElfinReceiveService          : 📥 등록된 새 기기: commax_Light_4 (index: 4)
+```
+위와 같이 sql init 스킵한다는 안내와 함계 기기를 등록하며 사용이 시작됩니다
+
+
 # 특이사항
 아직 개발진행중인 프로젝트이며, 아래와 같은 진행사항이 남아있습니다.
 
