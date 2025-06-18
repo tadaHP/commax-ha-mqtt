@@ -9,9 +9,14 @@ import lombok.Data;
 @Configuration
 @ConfigurationProperties(prefix = "mqtt")
 public class MqttProperties {
-    private String broker;
+    private String host;
+    private int port;   
     private String clientId;
     private String username;
     private String password;
     private String haTopic;
+
+    public String getBrokerUrl() {
+        return String.format("tcp://%s:%d", host, port);
+    }
 }
