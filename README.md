@@ -18,7 +18,7 @@ LICENSE는 AGPL 3.0 을  따라 자유로운 수전 및 재배포가 가능하�
 ```yml
 services:
   wallpadcontroller:
-    image: wallpadcontroller:latest
+    image: ghcr.io/tadahp/commax-wallpad:latest
     environment:
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
