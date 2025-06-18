@@ -9,7 +9,7 @@ mqtt를 통해 elfin-ew11과 통신을 하여, HA에서 MQTT 통합 구성요소
 Docker로 HA를 이용하는 사용자들을 위한 프로젝트로
 기존 MQTT 통합구성요소를 통해 Commax 월패드를 통합 예정입니다.
 
-LICENSE는 [CC BY-NC-SA 4.0 License](https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode)를 따르며
+LICENSE는 AGPL 3.0 을  따르며
 수정/재배포 허용, 비상업적 사용, 오픈소스 취지의 유지는 허용되며
 수정 후 재판매는 금지됩니다.
 
