@@ -9,3 +9,11 @@ spring:
   datasource:
     url: jdbc:sqlite:./mydb.db
     driver-class-name: org.sqlite.JDBC
+
+mqtt:
+  host: ${MQTT_HOST:localhost}
+  port: ${MQTT_PORT:1883}
+  client-id: ${MQTT_CLIENT_ID:wallpad-controller}
+  username: ${MQTT_USERNAME:}
+  password: ${MQTT_PASSWORD:}
+  ha-topic: ${MQTT_HA_TOPIC:commax}
