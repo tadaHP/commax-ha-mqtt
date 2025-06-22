@@ -19,6 +19,8 @@ LICENSE는 AGPL 3.0 을  따라 자유로운 수전 및 재배포가 가능하�
 services:
   wallpadcontroller:
     image: ghcr.io/tadahp/commax-wallpad:latest
+    volumes:
+      - <마운트할 파일 명>:/app
     environment:
       - MQTT_HOST=localhost
       - MQTT_PORT=1883
@@ -26,9 +28,21 @@ services:
       - MQTT_USERNAME=
       - MQTT_PASSWORD=
       - MQTT_HA_TOPIC=commax
+
+volumes:
+  <마운트할 파일 명>:
 ```
 
 위 내용중 환경변수에 맞게 채워넣으시면 작동하며, 빈값은 옵션입니다.
+
+```yml
+volumes:
+    - <마운트할 파일 명>:/app
+```
+
+위 내용은 /app 에 저장될 sqlite 정보를 지속해서 사용하기 위해 사용합니다
+
+추후 Mariadb등의 db로 변경 가능성 있습니다
 
 
 최초 실행시 initail.sql이 작동해야 합니다.
