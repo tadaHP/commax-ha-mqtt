@@ -8,10 +8,7 @@ import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRep
 import com.hyeonpyo.wallpadcontroller.domain.packethistory.LogStatus;
 import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
 import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLogRepository;
-import com.hyeonpyo.wallpadcontroller.dto.PacketCoverageDevice;
-import com.hyeonpyo.wallpadcontroller.dto.PacketCoverageField;
-import com.hyeonpyo.wallpadcontroller.dto.PacketCoverageKind;
-import com.hyeonpyo.wallpadcontroller.dto.PacketCoverageValue;
+import com.hyeonpyo.wallpadcontroller.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +26,6 @@ public class PacketCoverageService {
         List<DeviceType> allDevices = deviceTypeRepository.findAllWithFullStructure();
         List<PacketLog> successLogs = packetLogRepository.findByStatus(LogStatus.SUCCESS);
 
-        // Map<"Header-Position", Set<"HexValue">>
         Map<String, Set<String>> receivedData = new HashMap<>();
         for (PacketLog log : successLogs) {
             String[] hexValues = log.getRawData().split(" ");
@@ -47,9 +43,10 @@ public class PacketCoverageService {
             for (PacketType packetType : deviceType.getPacketTypes()) {
                 String header = packetType.getHeader();
                 if (header != null) {
-                    boolean receivedOverall = receivedData.keySet().stream().anyMatch(k -> k.startsWith(header + "-"));
                     List<PacketCoverageField> fields = buildFields(packetType, receivedData);
-                    kindsMap.put(packetType.getKind(), new PacketCoverageKind(packetType.getKind(), header, receivedOverall, fields));
+                    boolean receivedOverall = receivedData.keySet().stream().anyMatch(k -> k.startsWith(header + "-"));
+                    CoverageStatus summaryStatus = calculateSummaryStatus(fields, receivedOverall);
+                    kindsMap.put(packetType.getKind(), new PacketCoverageKind(packetType.getKind(), header, summaryStatus, fields));
                 }
             }
             if (!kindsMap.isEmpty()) {
@@ -88,5 +85,25 @@ public class PacketCoverageService {
             }
         }
         return fields;
+    }
+
+    private CoverageStatus calculateSummaryStatus(List<PacketCoverageField> fields, boolean receivedOverall) {
+        if (!receivedOverall) {
+            return CoverageStatus.MISSING;
+        }
+
+        boolean hasNew = fields.stream().anyMatch(f -> !f.getNewValues().isEmpty());
+        if (hasNew) {
+            return CoverageStatus.NEW_DETECTED;
+        }
+
+        boolean hasMissing = fields.stream()
+                .flatMap(f -> f.getDefinedValues().stream())
+                .anyMatch(v -> !v.isReceived());
+        if (hasMissing) {
+            return CoverageStatus.PARTIAL;
+        }
+
+        return CoverageStatus.COMPLETE;
     }
 }

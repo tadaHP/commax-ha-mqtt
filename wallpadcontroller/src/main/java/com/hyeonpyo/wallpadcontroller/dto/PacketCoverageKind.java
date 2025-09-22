@@ -10,6 +10,6 @@ import java.util.List;
 public class PacketCoverageKind {
     private String name;
     private String header;
-    private boolean received;
+    private CoverageStatus status;
     private List<PacketCoverageField> fields;
 }

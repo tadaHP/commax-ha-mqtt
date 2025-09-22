@@ -20,11 +20,24 @@
                     <li th:each="kind : ${device.kinds}" x-data="{ open: false }">
                         <div @click="open = !open" class="flex justify-between items-center py-3 cursor-pointer">
                             <span class="text-gray-800 font-semibold" th:text="${kind.name} + ' (' + ${kind.header} + ')'"></span>
-                            <span th:text="${kind.received} ? 'RECEIVED' : 'MISSING'"
-                                  th:classappend="${kind.received} ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'"
-                                  class="px-3 py-1 text-xs font-bold leading-tight rounded-full flex-shrink-0">
-                            </span>
-                        </div>
+                        <div th:switch="${kind.status}" class="flex items-center justify-end flex-shrink-0">
+                                <div th:case="${T(com.hyeonpyo.wallpadcontroller.dto.CoverageStatus).COMPLETE}" class="flex items-center">
+                                    <span class="h-2.5 w-2.5 rounded-full bg-green-500"></span>
+                                    <span class="ml-2 text-xs font-medium text-gray-600">COMPLETE</span>
+                                </div>
+                                <div th:case="${T(com.hyeonpyo.wallpadcontroller.dto.CoverageStatus).PARTIAL}" class="flex items-center">
+                                    <span class="h-2.5 w-2.5 rounded-full bg-orange-500"></span>
+                                    <span class="ml-2 text-xs font-medium text-gray-600">PARTIAL</span>
+                                </div>
+                                <div th:case="${T(com.hyeonpyo.wallpadcontroller.dto.CoverageStatus).NEW_DETECTED}" class="flex items-center">
+                                    <span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                                    <span class="ml-2 text-xs font-medium text-gray-600">NEW</span>
+                                </div>
+                                <div th:case="${T(com.hyeonpyo.wallpadcontroller.dto.CoverageStatus).MISSING}" class="flex items-center">
+                                    <span class="h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                                    <span class="ml-2 text-xs font-medium text-gray-600">MISSING</span>
+                                </div>
+                            </div>                        </div>
                         <!-- Detailed Fields View (Hidden by default) -->
                         <div x-show="open" x-transition class="pb-4 pl-2">
                             <div th:each="field : ${kind.fields}" class="mt-2">
