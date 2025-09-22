@@ -3,13 +3,10 @@ package com.hyeonpyo.wallpadcontroller.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
-import java.util.List;
-
 @Getter
 @AllArgsConstructor
-public class PacketCoverageKind {
-    private String name;
-    private String header;
+public class PacketCoverageValue {
+    private String rawKey;
+    private String hexValue;
     private boolean received;
-    private List<PacketCoverageField> fields;
 }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>패킷 수신 현황 대시보드</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-100 font-sans">
     <div class="container mx-auto p-8">
@@ -12,18 +13,43 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <!-- Device Card -->
             <div th:each="device : ${devices}" class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-bold text-gray-900 border-b pb-2 mb-4" th:text="${device.name}">Device Name</h2>
+                <h2 class="text-xl font-bold text-gray-900 border-b pb-2 mb-4" th:text="${device.name}"></h2>
                 
-                <ul>
-                    <li th:each="kind : ${device.kinds}" class="flex justify-between items-center py-3 border-b last:border-b-0">
-                        <div>
+                <ul class="divide-y divide-gray-200">
+                    <!-- Packet Kind Accordion -->
+                    <li th:each="kind : ${device.kinds}" x-data="{ open: false }">
+                        <div @click="open = !open" class="flex justify-between items-center py-3 cursor-pointer">
                             <span class="text-gray-800 font-semibold" th:text="${kind.name} + ' (' + ${kind.header} + ')'"></span>
-                            <p th:if="${kind.description != null && !kind.description.isEmpty()}" class="text-xs text-gray-500 pt-1" th:text="${kind.description}"></p>
+                            <span th:text="${kind.received} ? 'RECEIVED' : 'MISSING'"
+                                  th:classappend="${kind.received} ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'"
+                                  class="px-3 py-1 text-xs font-bold leading-tight rounded-full flex-shrink-0">
+                            </span>
                         </div>
-                        <span th:text="${kind.received} ? 'RECEIVED' : 'MISSING'"
-                              th:classappend="${kind.received} ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'"
-                              class="px-3 py-1 text-xs font-bold leading-tight rounded-full flex-shrink-0">
-                        </span>
+                        <!-- Detailed Fields View (Hidden by default) -->
+                        <div x-show="open" x-transition class="pb-4 pl-2">
+                            <div th:each="field : ${kind.fields}" class="mt-2">
+                                <h4 class="text-sm font-semibold text-gray-600" th:text="${field.name}"></h4>
+                                <table class="mt-1 w-full text-xs">
+                                    <tbody>
+                                        <tr th:each="value : ${field.definedValues}">
+                                            <td class="py-1 pr-2" th:text="${value.rawKey} + ' (' + ${value.hexValue} + ')'"></td>
+                                            <td class="py-1">
+                                                <span th:text="${value.received} ? 'RECEIVED' : 'MISSING'"
+                                                      th:classappend="${value.received} ? 'text-green-600' : 'text-red-500'"
+                                                      class="font-bold">
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr th:each="value : ${field.newValues}">
+                                            <td class="py-1 pr-2" th:text="'NEW (' + ${value.hexValue} + ')'"></td>
+                                            <td class="py-1">
+                                                <span class="text-blue-600 font-bold">NEW VALUE</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </li>
                 </ul>
             </div>
