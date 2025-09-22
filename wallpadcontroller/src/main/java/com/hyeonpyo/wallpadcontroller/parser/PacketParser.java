@@ -18,8 +18,9 @@ import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingField;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingFieldValue;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
-import com.hyeonpyo.wallpadcontroller.domain.unknownpacket.UnknownPacket;
-import com.hyeonpyo.wallpadcontroller.domain.unknownpacket.UnknownPacketRepository;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.LogStatus;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLogRepository;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ElevatorState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.FanState;
@@ -40,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PacketParser {
 
     private final DeviceTypeRepository deviceTypeRepository;
-    private final UnknownPacketRepository unknownPacketRepository;
+    private final PacketLogRepository packetLogRepository;
 
     private final Map<Long, Map<String, String>> packetFieldValueMap = new HashMap<>();
     private final Map<Long, Map<String, String>> hexToRawKeyMap = new HashMap<>();
@@ -116,38 +117,45 @@ public class PacketParser {
     }
 
     private Optional<ParsedPacket> parseSinglePacket(byte[] bytes) {
+        String rawHex = bytesToHexString(bytes);
         String header = String.format("%02X", bytes[0]);
-    
         PacketType packet = headerMap.get(header);
+
         if (packet == null) {
-            String rawHex = bytesToHexString(bytes);
             String notes = generateNotesForUnknownPacket(bytes);
-            UnknownPacket unknownPacket = UnknownPacket.builder()
+            PacketLog log = PacketLog.builder()
                     .rawData(rawHex)
+                    .status(LogStatus.UNKNOWN_HEADER)
                     .notes(notes)
                     .build();
-            unknownPacketRepository.save(unknownPacket);
-            log.info("📝 미확인 패킷 저장: {} | 분석: {}", rawHex, notes);
+            packetLogRepository.save(log);
+            // log.info("📝 미확인 패킷 로그: {}", rawHex);
             return Optional.empty();
         }
-    
+
         String deviceName = headerToDeviceName.get(header);
-        if (deviceName == null) return Optional.empty();
-    
         Map<Integer, ParsingField> fields = fieldLookupMap.get(packet.getId());
         Map<String, String> parsedFields = new LinkedHashMap<>();
-    
         for (int i = 1; i < PACKET_LENGTH; i++) {
             ParsingField field = fields.get(i);
             if (field == null || "empty".equals(field.getName())) continue;
-                
             String hex = String.format("%02X", bytes[i]);
             String readable = convertHexToRawKey(field.getId(), hex);
             parsedFields.put(field.getName(), readable);
         }
-    
+
         int deviceIndex = extractDeviceIndex(fields, bytes);
         DeviceState state = toDeviceState(deviceName, parsedFields);
+
+        String notes = String.format("Device: %s, Index: %d, Kind: %s, State: %s",
+                deviceName, deviceIndex, packet.getKind(), (state != null ? state.toMap().toString() : "{}"));
+        PacketLog log = PacketLog.builder()
+                .rawData(rawHex)
+                .status(LogStatus.SUCCESS)
+                .notes(notes)
+                .build();
+        packetLogRepository.save(log);
+
         return Optional.of(new ParsedPacket(deviceName, deviceIndex, PacketKind.fromKey(packet.getKind()), state));
     }
 

@@ -1,6 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.controller;
 
-import com.hyeonpyo.wallpadcontroller.service.UnknownPacketService;
+import com.hyeonpyo.wallpadcontroller.service.PacketLogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -11,15 +11,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 @RequiredArgsConstructor
-public class UnknownPacketController {
+public class PacketLogController {
 
-    private final UnknownPacketService unknownPacketService;
+    private final PacketLogService packetLogService;
 
-    @GetMapping("/unknown-packets")
-    public String listUnknownPackets(
+    @GetMapping("/packet-logs")
+    public String listPacketLogs(
             Model model,
             @PageableDefault(size = 20, sort = "receivedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        model.addAttribute("packetPage", unknownPacketService.findAll(pageable));
-        return "unknown-packets";
+        model.addAttribute("packetPage", packetLogService.findAll(pageable));
+        return "packet-logs";
     }
 }

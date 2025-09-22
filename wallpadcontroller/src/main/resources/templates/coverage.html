@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>패킷 수신 현황 대시보드</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8">패킷 수신 현황 대시보드</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Device Card -->
+            <div th:each="device : ${devices}" class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-900 border-b pb-2 mb-4" th:text="${device.name}">Device Name</h2>
+                
+                <ul>
+                    <li th:each="kind : ${device.kinds}" class="flex justify-between items-center py-3 border-b last:border-b-0">
+                        <div>
+                            <span class="text-gray-800 font-semibold" th:text="${kind.name} + ' (' + ${kind.header} + ')'"></span>
+                            <p th:if="${kind.description != null && !kind.description.isEmpty()}" class="text-xs text-gray-500 pt-1" th:text="${kind.description}"></p>
+                        </div>
+                        <span th:text="${kind.received} ? 'RECEIVED' : 'MISSING'"
+                              th:classappend="${kind.received} ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'"
+                              class="px-3 py-1 text-xs font-bold leading-tight rounded-full flex-shrink-0">
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+         <div class="mt-8 text-center">
+            <a href="/packet-logs" class="text-blue-500 hover:underline">전체 패킷 로그 보기 &rarr;</a>
+        </div>
+    </div>
+</body>
+</html>

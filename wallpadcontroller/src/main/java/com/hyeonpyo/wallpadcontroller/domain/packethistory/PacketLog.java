@@ -1,7 +1,9 @@
-package com.hyeonpyo.wallpadcontroller.domain.unknownpacket;
+package com.hyeonpyo.wallpadcontroller.domain.packethistory;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,7 +22,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UnknownPacket {
+public class PacketLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +34,10 @@ public class UnknownPacket {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime receivedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private LogStatus status;
 
     @Lob
     private String notes;
