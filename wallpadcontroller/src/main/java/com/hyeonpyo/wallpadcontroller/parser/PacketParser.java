@@ -30,6 +30,7 @@ import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.OutletState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ThermoState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.PacketKind;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.ParsedPacket;
+import com.hyeonpyo.wallpadcontroller.service.PacketCaptureService;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class PacketParser {
 
     private final DeviceTypeRepository deviceTypeRepository;
     private final PacketLogRepository packetLogRepository;
+    private final PacketCaptureService packetCaptureService;
 
     private final Map<Long, Map<String, String>> packetFieldValueMap = new HashMap<>();
     private final Map<Long, Map<String, String>> hexToRawKeyMap = new HashMap<>();
@@ -51,6 +53,11 @@ public class PacketParser {
     private final Map<String, PacketType> headerMap = new HashMap<>();
     private final Map<String, String> headerToDeviceName = new HashMap<>();
     private final int PACKET_LENGTH = 8;
+
+    public Map<String, String> getHeaderToDeviceName() {
+        return new HashMap<>(headerToDeviceName);
+    }
+
 
     @PostConstruct
     public void init() {
@@ -129,7 +136,7 @@ public class PacketParser {
                     .notes(notes)
                     .build();
             packetLogRepository.save(log);
-            // log.info("📝 미확인 패킷 로그: {}", rawHex);
+            packetCaptureService.sendPacket(log);
             return Optional.empty();
         }
 
@@ -155,6 +162,7 @@ public class PacketParser {
                 .notes(notes)
                 .build();
         packetLogRepository.save(log);
+        packetCaptureService.sendPacket(log);
 
         return Optional.of(new ParsedPacket(deviceName, deviceIndex, PacketKind.fromKey(packet.getKind()), state));
     }

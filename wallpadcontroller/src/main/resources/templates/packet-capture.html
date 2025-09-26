@@ -1,0 +1,196 @@
+<!-- src/main/resources/templates/packet-capture.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>실시간 패킷 캡처</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">실시간 패킷 캡처</h1>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <select id="filterDropdown" class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="ALL">전체</option>
+                        <option value="UNKNOWN">모르는 패킷</option>
+                        <optgroup th:each="group : ${packetTypeGroups}" th:label="${group.key}">
+                            <option th:value="${'GROUP_' + group.key}" th:text="${group.key + ' (전체)'}"></option>
+                            <option th:each="type : ${group.value}" th:value="${type.header}" th:text="${type.displayName}"></option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <button id="startCaptureBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    캡처 시작
+                </button>
+                <button id="stopCaptureBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" disabled>
+                    캡처 중지
+                </button>
+                 <button id="clearBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                    화면 지우기
+                </button>
+            </div>
+        </div>
+
+        <div id="capture-container" class="bg-white shadow-md rounded-lg p-4 space-y-2">
+        </div>
+    </div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    const startBtn = document.getElementById('startCaptureBtn');
+    const stopBtn = document.getElementById('stopCaptureBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const container = document.getElementById('capture-container');
+    const filterDropdown = document.getElementById('filterDropdown');
+    let eventSource;
+
+    const packetTypeGroups = /*[[${packetTypeGroups}]]*/ {};
+    
+    const headerToDisplayName = {};
+    const headerToGroupNameMap = {};
+    for (const [groupName, types] of Object.entries(packetTypeGroups)) {
+        for (const type of types) {
+            headerToDisplayName[type.header] = type.displayName;
+            headerToGroupNameMap[type.header] = groupName;
+        }
+    }
+    const knownHeaders = Object.keys(headerToDisplayName);
+
+    // ▼▼▼ [추가] 색상 관련 로직 ▼▼▼
+    const pastelColors = ['#FFDDC1', '#FFABAB', '#FFC3A0', '#FFD6A5', '#FDFFB6', '#CAFFBF', '#9BF6FF', '#A0C4FF', '#BDB2FF', '#FFC6FF', '#FFFFFC'];
+
+    function getColorForHeader(header) {
+        // 간단한 해시 함수로 헤더 문자열을 숫자로 변환
+        let hash = 0;
+        for (let i = 0; i < header.length; i++) {
+            hash = header.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash % pastelColors.length);
+        return pastelColors[index];
+    }
+    // ▲▲▲ [추가] 색상 관련 로직 ▲▲▲
+
+    let currentFilter = 'ALL';
+
+    filterDropdown.addEventListener('change', () => {
+        currentFilter = filterDropdown.value;
+        applyFilter();
+    });
+
+    function applyFilter() {
+        const isGroupFilter = currentFilter.startsWith('GROUP_');
+        const groupFilterName = isGroupFilter ? currentFilter.substring(6) : null;
+
+        const packets = container.querySelectorAll('.packet-entry');
+        packets.forEach(packetEl => {
+            const header = packetEl.dataset.header;
+            const groupName = packetEl.dataset.groupName;
+            const isKnown = packetEl.dataset.isKnown === 'true';
+
+            let shouldShow = false;
+            if (isGroupFilter) {
+                shouldShow = groupName === groupFilterName;
+            } else if (currentFilter === 'ALL') {
+                shouldShow = true;
+            } else if (currentFilter === 'UNKNOWN') {
+                shouldShow = !isKnown;
+            } else { // Specific header filter
+                shouldShow = currentFilter === header;
+            }
+
+            packetEl.style.display = shouldShow ? 'flex' : 'none';
+        });
+    }
+
+    startBtn.addEventListener('click', async () => {
+        try {
+            await fetch('/capture/start', { method: 'POST' });
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            eventSource = new EventSource('/capture/events');
+            eventSource.addEventListener('packet', event => {
+                const packet = JSON.parse(event.data);
+                addPacketToView(packet);
+            });
+
+            eventSource.onerror = () => {
+                stopCapture();
+            };
+
+        } catch (error) {
+            console.error('Error starting capture:', error);
+        }
+    });
+
+    const stopCapture = async () => {
+        if (eventSource) {
+            eventSource.close();
+        }
+        try {
+            await fetch('/capture/stop', { method: 'POST' });
+        } finally {
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+    };
+
+    stopBtn.addEventListener('click', stopCapture);
+    clearBtn.addEventListener('click', () => container.innerHTML = '');
+
+    function getPacketHeader(rawData) {
+        return rawData.substring(0, 2);
+    }
+
+    function addPacketToView(packet) {
+        const header = getPacketHeader(packet.rawData);
+        const isKnown = knownHeaders.includes(header);
+        const groupName = headerToGroupNameMap[header];
+        const displayName = headerToDisplayName[header] || 'Unknown';
+
+        const packetEl = document.createElement('div');
+        packetEl.className = 'packet-entry font-mono text-sm p-2 border-b flex justify-between items-center';
+        
+        packetEl.dataset.header = header;
+        packetEl.dataset.isKnown = isKnown;
+        if (groupName) {
+            packetEl.dataset.groupName = groupName;
+        }
+
+        // ▼▼▼ [추가] 배경색 적용 ▼▼▼
+        packetEl.style.backgroundColor = getColorForHeader(header);
+        // ▲▲▲ [추가] 배경색 적용 ▼▼▼
+
+        const headerText = `${header} (${displayName})`;
+        packetEl.innerHTML = `
+            <span>[${new Date(packet.receivedAt).toLocaleTimeString()}] ${packet.rawData}</span>
+            <span class="text-xs font-semibold text-gray-600">${headerText}</span>
+        `;
+
+        const isGroupFilter = currentFilter.startsWith('GROUP_');
+        const groupFilterName = isGroupFilter ? currentFilter.substring(6) : null;
+
+        let shouldShow = false;
+        if (isGroupFilter) {
+            shouldShow = groupName === groupFilterName;
+        } else if (currentFilter === 'ALL') {
+            shouldShow = true;
+        } else if (currentFilter === 'UNKNOWN') {
+            shouldShow = !isKnown;
+        } else { // Specific header filter
+            shouldShow = currentFilter === header;
+        }
+
+        packetEl.style.display = shouldShow ? 'flex' : 'none';
+
+        container.prepend(packetEl);
+    }
+
+    /*]]>*/
+</script>
+</body>
+</html>

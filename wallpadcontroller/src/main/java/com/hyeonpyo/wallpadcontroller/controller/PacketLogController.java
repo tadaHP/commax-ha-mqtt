@@ -1,13 +1,16 @@
 package com.hyeonpyo.wallpadcontroller.controller;
 
-import com.hyeonpyo.wallpadcontroller.service.PacketLogService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import com.hyeonpyo.wallpadcontroller.service.PacketLogService;
+
+import lombok.RequiredArgsConstructor;
+
 
 @Controller
 @RequiredArgsConstructor
@@ -22,4 +25,11 @@ public class PacketLogController {
         model.addAttribute("packetPage", packetLogService.findAll(pageable));
         return "packet-logs";
     }
+
+    @GetMapping("/packet-capture")
+    public String getPacketCapture(Model model) {
+        model.addAttribute("packetTypeGroups", packetLogService.getGroupedPacketTypes());
+        return "packet-capture";
+    }
+    
 }
