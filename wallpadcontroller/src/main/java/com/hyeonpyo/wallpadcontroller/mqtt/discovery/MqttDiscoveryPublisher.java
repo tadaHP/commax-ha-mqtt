@@ -43,7 +43,6 @@ public class MqttDiscoveryPublisher {
 
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("name", baseId);
-                payload.put("object_id", objectId);
                 payload.put("unique_id", uniqueId);
                 payload.put("device", Map.of(
                         "identifiers", List.of("commax_wallpad"),
@@ -61,6 +60,7 @@ public class MqttDiscoveryPublisher {
                 switch (device.getType()) {
                     case Light -> {
                         topic = DISCOVERY_PREFIX + "/light/" + baseId + "/config";
+                        payload.put("default_entity_id", "light." + objectId);
                         payload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/power");
                         payload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/power");
                         payload.put("payload_on", "ON");
@@ -68,6 +68,7 @@ public class MqttDiscoveryPublisher {
                     }
                     case LightBreaker, Outlet -> {
                         topic = DISCOVERY_PREFIX + "/switch/" + baseId + "/config";
+                        payload.put("default_entity_id", "switch." + objectId);
                         payload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/power");
                         payload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/power");
                         payload.put("payload_on", "ON");
@@ -79,7 +80,7 @@ public class MqttDiscoveryPublisher {
                             String ecoTopic = DISCOVERY_PREFIX + "/switch/" + baseId + "_ecomode/config";
                             Map<String, Object> ecoPayload = new HashMap<>(payload);
                             ecoPayload.put("name", baseId + " 자동대기전력차단");
-                            ecoPayload.put("object_id", objectId + "_ecomode");
+                            ecoPayload.put("default_entity_id", "switch." + objectId + "_ecomode");
                             ecoPayload.put("unique_id", uniqueId + "_ecomode");
                             ecoPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/ecomode");
                             ecoPayload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/ecomode");
@@ -89,7 +90,7 @@ public class MqttDiscoveryPublisher {
                             String cutoffTopic = DISCOVERY_PREFIX + "/number/" + baseId + "_cutoff_value/config";
                             Map<String, Object> cutoffPayload = new HashMap<>(payload);
                             cutoffPayload.put("name", baseId + " 자동대기전력차단값");
-                            cutoffPayload.put("object_id", objectId + "_cutoff_value");
+                            cutoffPayload.put("default_entity_id", "number." + objectId + "_cutoff_value");
                             cutoffPayload.put("unique_id", uniqueId + "_cutoff_value");
                             cutoffPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/cutoff");
                             cutoffPayload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/setCutoff");
@@ -104,7 +105,7 @@ public class MqttDiscoveryPublisher {
                             String wattTopic = DISCOVERY_PREFIX + "/sensor/" + baseId + "_watt/config";
                             Map<String, Object> wattPayload = new HashMap<>(payload);
                             wattPayload.put("name", baseId + " 소비전력");
-                            wattPayload.put("object_id", objectId + "_watt");
+                            wattPayload.put("default_entity_id", "sensor." + objectId + "_watt");
                             wattPayload.put("unique_id", uniqueId + "_watt");
                             wattPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/watt");
                             wattPayload.put("unit_of_measurement", "W");
@@ -115,6 +116,7 @@ public class MqttDiscoveryPublisher {
                     }
                     case Fan -> {
                        topic = DISCOVERY_PREFIX + "/fan/" + baseId + "/config";
+                        payload.put("default_entity_id", "fan." + objectId);
                         // 기본 전원 관련
                         payload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/power");
                         payload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/power");
@@ -154,6 +156,7 @@ public class MqttDiscoveryPublisher {
                     }
                     case Thermo -> {
                         topic = DISCOVERY_PREFIX + "/climate/" + baseId + "/config";
+                        payload.put("default_entity_id", "climate." + objectId);
                         payload.put("current_temperature_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/curTemp");
                         payload.put("temperature_state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/setTemp");
                         payload.put("temperature_command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/setTemp");
@@ -169,6 +172,7 @@ public class MqttDiscoveryPublisher {
                     case Gas -> {
                         // button
                         topic = DISCOVERY_PREFIX + "/button/" + baseId + "/config";
+                        payload.put("default_entity_id", "button." + objectId);
                         payload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/button");
                         payload.put("payload_press", "PRESS");
                     
@@ -176,7 +180,7 @@ public class MqttDiscoveryPublisher {
                         String binTopic = DISCOVERY_PREFIX + "/binary_sensor/" + baseId + "/config";
                         Map<String, Object> binPayload = new HashMap<>(payload);
                         binPayload.put("name", "가스밸브 " + device.getIndex());
-                        binPayload.put("object_id", objectId + "_valve");
+                        binPayload.put("default_entity_id", "binary_sensor." + objectId + "_valve");
                         binPayload.put("unique_id", uniqueId + "_valve");
                         binPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/power");
                         binPayload.put("payload_on", "ON");
