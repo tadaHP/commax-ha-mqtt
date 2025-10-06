@@ -19,18 +19,25 @@ LICENSE는 AGPL 3.0 을  따라 자유로운 수전 및 재배포가 가능하�
 services:
   wallpadcontroller:
     image: ghcr.io/tadahp/commax-wallpad:latest
+    container_name: wallpadcontroller
+    restart: unless-stopped
+
     volumes:
-      - <마운트할 파일 명>:/app
+      - commax-wallpad:/data
+
+    ports:
+      - "52394:8080"
+
     environment:
-      - MQTT_HOST=localhost
-      - MQTT_PORT=1883
-      - MQTT_CLIENT_ID=wallpad-controller
+      - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/mydb.db
+      - MQTT_HOST=
+      - MQTT_PORT=
+      - MQTT_CLIENT_ID=
       - MQTT_USERNAME=
       - MQTT_PASSWORD=
-      - MQTT_HA_TOPIC=commax
-
+      - MQTT_HA_TOPIC=
 volumes:
-  <마운트할 파일 명>:
+  commax-wallpad:
 ```
 
 위 내용중 환경변수에 맞게 채워넣으시면 작동하며, 빈값은 옵션입니다.
