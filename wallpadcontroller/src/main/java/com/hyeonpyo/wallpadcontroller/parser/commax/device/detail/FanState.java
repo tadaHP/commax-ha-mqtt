@@ -10,31 +10,28 @@ import lombok.Data;
 @Data
 public class FanState implements DeviceState {
     private final String speed;
-    private final String mode;
     private final String power;
 
-    public FanState(String speed, String mode) {
+    public FanState(String speed, String power) {
         this.speed = speed;
-        this.mode = mode;
-        if(mode == null || mode.isEmpty()) {
-            this.power = "OFF";
-        } else {
-            this.power = mode.equals("off") ? "OFF" : "ON";
-        }
+        this.power = power;
     }
 
 
     @Override
     public String toJson() {
-        return String.format("{\"speed\": \"%s\", \"mode\": \"%s\"}", speed, mode);
+        return String.format("{\"speed\": \"%s\", \"power\": \"%s\"}", speed, power);
     }
 
     @Override
     public Map<String, String> toMap() {
         Map<String, String> map = new HashMap<>();
-        map.put("speed", speed);
-        map.put("mode", mode);
-        map.put("power", power);
+        if (speed != null) {
+            map.put("speed", speed);
+        }
+        if (power != null) {
+            map.put("power", power);
+        }
         return map;
     }
 }

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>전체 패킷 로그</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">전체 패킷 로그</h1>
+
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr class="border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        <th class="px-5 py-3">ID</th>
+                        <th class="px-5 py-3">수신 시간</th>
+                        <th class="px-5 py-3">상태</th>
+                        <th class="px-5 py-3">원본 데이터</th>
+                        <th class="px-5 py-3">분석 결과</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="log : ${packetPage.content}" class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-5 py-4 text-sm" th:text="${log.id}">1</td>
+                        <td class="px-5 py-4 text-sm" th:text="${#temporals.format(log.receivedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        <td class="px-5 py-4 text-sm">
+                            <span th:text="${log.status}" 
+                                  th:classappend="${log.status.name() == 'SUCCESS'} ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'"
+                                  class="px-2 py-1 font-semibold leading-tight rounded-full text-xs">
+                            </span>
+                        </td>
+                        <td class="px-5 py-4 text-sm font-mono" th:text="${log.rawData}"></td>
+                        <td class="px-5 py-4 text-sm font-mono" th:text="${log.notes}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${packetPage.totalPages > 1}" class="flex items-center justify-between mt-6">
+            <div class="flex">
+                <a th:href="@{/packet-logs(page=0, size=${packetPage.size})}"
+                   class="px-4 py-2 mx-1 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-200"
+                   th:classappend="${packetPage.first} ? 'opacity-50 cursor-not-allowed' : ''">
+                    &laquo; 처음
+                </a>
+                <a th:href="@{/packet-logs(page=${packetPage.number - 1}, size=${packetPage.size})}"
+                   class="px-4 py-2 mx-1 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-200"
+                   th:classappend="${packetPage.first} ? 'opacity-50 cursor-not-allowed' : ''">
+                    이전
+                </a>
+            </div>
+
+            <div class="text-sm text-gray-700">
+                <span th:text="${packetPage.number + 1}">1</span> / <span th:text="${packetPage.totalPages}">10</span> 페이지
+            </div>
+
+            <div class="flex">
+                <a th:href="@{/packet-logs(page=${packetPage.number + 1}, size=${packetPage.size})}"
+                   class="px-4 py-2 mx-1 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-200"
+                   th:classappend="${packetPage.last} ? 'opacity-50 cursor-not-allowed' : ''">
+                    다음
+                </a>
+                 <a th:href="@{/packet-logs(page=${packetPage.totalPages - 1}, size=${packetPage.size})}"
+                   class="px-4 py-2 mx-1 text-sm font-medium text-gray-700 bg-white rounded-md hover:bg-gray-200"
+                   th:classappend="${packetPage.last} ? 'opacity-50 cursor-not-allowed' : ''">
+                    마지막 &raquo;
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

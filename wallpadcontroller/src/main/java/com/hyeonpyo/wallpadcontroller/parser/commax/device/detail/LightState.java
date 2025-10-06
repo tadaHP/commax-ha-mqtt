@@ -1,5 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.parser.commax.device.detail;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
@@ -19,6 +20,10 @@ public class LightState implements DeviceState {
 
     @Override
     public Map<String, String> toMap() {
-        return Map.of("power", power);
+        Map<String, String> map = new HashMap<>();
+        if (power != null) {
+            map.put("power", power);
+        }
+        return map;
     }
 }
