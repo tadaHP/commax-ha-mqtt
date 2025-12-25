@@ -17,3 +17,14 @@ mqtt:
   username: ${MQTT_USERNAME:}
   password: ${MQTT_PASSWORD:}
   ha-topic: ${MQTT_HA_TOPIC:commax}
+
+ew11:
+  transport: ${EW11_TRANSPORT:mqtt}
+  mqtt:
+    send-topic: ${EW11_MQTT_SEND_TOPIC:ew11/send}
+    receive-topic: ${EW11_MQTT_RECEIVE_TOPIC:ew11/recv}
+  udp:
+    host: ${EW11_UDP_HOST:127.0.0.1}
+    port: ${EW11_UDP_PORT:60000}
+    listen-port: ${EW11_UDP_LISTEN_PORT:60001}
+    buffer-size: ${EW11_UDP_BUFFER_SIZE:2048}
