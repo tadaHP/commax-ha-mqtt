@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
 
 import com.hyeonpyo.wallpadcontroller.device.state.DeviceStateManager;
@@ -52,8 +51,7 @@ public class ElfinReceiveService {
         mqttSendService.publish(mqttProperties.getHaTopic() + "/status", "offline", 1, true);
     }
 
-    public void publishDeviceState(MqttMessage message) {
-        byte[] payloadBytes = message.getPayload();
+    public void publishDeviceState(byte[] payloadBytes) {
         StringBuilder hexBuilder = new StringBuilder();
 
         for (byte b : payloadBytes) {

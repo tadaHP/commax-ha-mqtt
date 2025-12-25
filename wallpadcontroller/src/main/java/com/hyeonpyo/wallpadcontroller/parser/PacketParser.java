@@ -3,18 +3,24 @@ package com.hyeonpyo.wallpadcontroller.parser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.StringJoiner;
 
 import org.springframework.stereotype.Component;
 
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingField;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingFieldValue;
-import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.LogStatus;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLogRepository;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ElevatorState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.FanState;
@@ -24,6 +30,7 @@ import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.OutletState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ThermoState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.PacketKind;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.ParsedPacket;
+import com.hyeonpyo.wallpadcontroller.service.PacketCaptureService;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -35,20 +42,22 @@ import lombok.extern.slf4j.Slf4j;
 public class PacketParser {
 
     private final DeviceTypeRepository deviceTypeRepository;
-
-    // private final Map<String, Map<String, PacketType>> deviceStructure = new HashMap<>();
-    // <deviceType의이름(light, thermo, fan), <packet.getKind(command,state,ack 등), 해당하는 엔티티> >
-    // private final Map<String, Map<String, Map<String, String>>> fieldValueMap;
+    private final PacketLogRepository packetLogRepository;
+    private final PacketCaptureService packetCaptureService;
 
     private final Map<Long, Map<String, String>> packetFieldValueMap = new HashMap<>();
     private final Map<Long, Map<String, String>> hexToRawKeyMap = new HashMap<>();
-
+    private final Map<String, Set<String>> reverseValueMap = new HashMap<>();
 
     private final Map<Long, Map<Integer, ParsingField>> fieldLookupMap = new HashMap<>();
-    // <PacketType의 PK, <position(패킷의 n번째), 패킷 n번째의 역할 정보>>
     private final Map<String, PacketType> headerMap = new HashMap<>();
     private final Map<String, String> headerToDeviceName = new HashMap<>();
     private final int PACKET_LENGTH = 8;
+
+    public Map<String, String> getHeaderToDeviceName() {
+        return new HashMap<>(headerToDeviceName);
+    }
+
 
     @PostConstruct
     public void init() {
@@ -57,48 +66,18 @@ public class PacketParser {
             Map<String, PacketType> packetMap = new HashMap<>();
             for (PacketType packet : deviceType.getPacketTypes()) {
                 packetMap.put(packet.getKind(), packet);
-                // 포지션별 필드 사전 구성
                 Map<Integer, ParsingField> fieldsByPosition = new HashMap<>();
                 for (ParsingField field : packet.getFields()) {
                     fieldsByPosition.put(field.getPosition(), field);
                 }
                 fieldLookupMap.put(packet.getId(), fieldsByPosition);
 
-                // header 기반 단일 조회용 map 구성
                 String header = packet.getHeader().toUpperCase();
                 headerMap.put(header, packet);
                 headerToDeviceName.put(header, deviceType.getName());
             }
-            // deviceStructure.put(deviceType.getName(), packetMap);
         }
-        // log.info("✅ 패킷 구조 DB에서 로드 완료 ({}종류)", deviceStructure.size());
     }
-
-    // @PostConstruct
-    // public void initStructureFromDb() {
-    //     List<DeviceType> deviceTypes = deviceTypeRepository.findAllWithFullStructure();
-
-    //     for (DeviceType deviceType : deviceTypes) {
-    //         String deviceName = deviceType.getName();
-    //         Map<String, Map<String, String>> fieldMap = new HashMap<>();
-
-    //         for (PacketType packetType : deviceType.getPacketTypes()) {
-    //             if (!"state".equalsIgnoreCase(packetType.getKind())) continue;
-
-    //             for (PacketField field : packetType.getFields()) {
-    //                 if (field.getName() == null || "empty".equals(field.getName())) continue;
-
-    //                 Map<String, String> values = new HashMap<>();
-    //                 for (PacketFieldValue fieldValue : field.getValueMappings()) {
-    //                     values.put(fieldValue.getRawKey(), fieldValue.getHex().toUpperCase());
-    //                 }
-    //                 fieldMap.put(field.getName(), values);
-    //             }
-    //         }
-
-    //         fieldValueMap.put(deviceName, fieldMap);
-    //     }
-    // }
 
     @PostConstruct
     public void initStructureFromDb() {
@@ -115,8 +94,13 @@ public class PacketParser {
                     Map<String, String> hexToRaw = new HashMap<>();
                 
                     for (ParsingFieldValue fieldValue : field.getValueMappings()) {
-                        rawToHex.put(fieldValue.getRawKey(), fieldValue.getHex().toUpperCase());
-                        hexToRaw.put(fieldValue.getHex().toUpperCase(), fieldValue.getRawKey());
+                        String hex = fieldValue.getHex().toUpperCase();
+                        String rawKey = fieldValue.getRawKey();
+                        rawToHex.put(rawKey, hex);
+                        hexToRaw.put(hex, rawKey);
+
+                        String reverseMapValue = String.format("%s:%s:%s", deviceType.getName(), field.getName(), rawKey);
+                        reverseValueMap.computeIfAbsent(hex, k -> new HashSet<>()).add(reverseMapValue);
                     }
                 
                     packetFieldValueMap.put(field.getId(), rawToHex);
@@ -140,38 +124,61 @@ public class PacketParser {
     }
 
     private Optional<ParsedPacket> parseSinglePacket(byte[] bytes) {
+        String rawHex = bytesToHexString(bytes);
         String header = String.format("%02X", bytes[0]);
-    
         PacketType packet = headerMap.get(header);
-        if (packet == null) return Optional.empty();
-    
+
+        if (packet == null) {
+            String notes = generateNotesForUnknownPacket(bytes);
+            PacketLog log = PacketLog.builder()
+                    .rawData(rawHex)
+                    .status(LogStatus.UNKNOWN_HEADER)
+                    .notes(notes)
+                    .build();
+            packetLogRepository.save(log);
+            packetCaptureService.sendPacket(log);
+            return Optional.empty();
+        }
+
         String deviceName = headerToDeviceName.get(header);
-        if (deviceName == null) return Optional.empty();
-    
         Map<Integer, ParsingField> fields = fieldLookupMap.get(packet.getId());
         Map<String, String> parsedFields = new LinkedHashMap<>();
-    
-        // for (int i = 1; i < PACKET_LENGTH; i++) {
-        //     PacketField field = fields.get(i);
-        //     if (field == null || "empty".equals(field.getName())) continue;
-        //     String hex = String.format("%02X", bytes[i]);
-        //     // String readable = convertHexToRawKey(deviceName, field.getName(), hex);
-        //     String readable = convertHexToRawKey(field.getId(), hex);
-        //     parsedFields.put(field.getName(), readable);
-        // }
-
         for (int i = 1; i < PACKET_LENGTH; i++) {
             ParsingField field = fields.get(i);
             if (field == null || "empty".equals(field.getName())) continue;
-                
             String hex = String.format("%02X", bytes[i]);
-            String readable = convertHexToRawKey(field.getId(), hex); // 수정된 부분
+            String readable = convertHexToRawKey(field.getId(), hex);
             parsedFields.put(field.getName(), readable);
         }
-    
+
         int deviceIndex = extractDeviceIndex(fields, bytes);
         DeviceState state = toDeviceState(deviceName, parsedFields);
+
+        String notes = String.format("Device: %s, Index: %d, Kind: %s, State: %s",
+                deviceName, deviceIndex, packet.getKind(), (state != null ? state.toMap().toString() : "{}"));
+        PacketLog log = PacketLog.builder()
+                .rawData(rawHex)
+                .status(LogStatus.SUCCESS)
+                .notes(notes)
+                .build();
+        packetLogRepository.save(log);
+        packetCaptureService.sendPacket(log);
+
         return Optional.of(new ParsedPacket(deviceName, deviceIndex, PacketKind.fromKey(packet.getKind()), state));
+    }
+
+    private String generateNotesForUnknownPacket(byte[] bytes) {
+        StringJoiner notes = new StringJoiner(" ");
+        for (byte b : bytes) {
+            String hex = String.format("%02X", b);
+            Set<String> meanings = reverseValueMap.get(hex);
+            if (meanings != null && !meanings.isEmpty()) {
+                notes.add(String.format("(%s)", String.join(" | ", meanings)));
+            } else {
+                notes.add("?");
+            }
+        }
+        return notes.toString();
     }
 
     private int extractDeviceIndex(Map<Integer, ParsingField> structure, byte[] bytes) {
@@ -219,24 +226,13 @@ public class PacketParser {
         return data;
     }
 
-    // private String convertHexToRawKey(String deviceName, String field, String hex) {
-    //     Map<String, Map<String, String>> fieldMap = fieldValueMap.get(deviceName);
-    //     if (fieldMap == null) return hex;
-
-    //     Map<String, String> valueMap = fieldMap.get(field);
-    //     if (valueMap == null) return hex;
-
-    //     for (Map.Entry<String, String> entry : valueMap.entrySet()) {
-    //         if (entry.getValue().equalsIgnoreCase(hex)) {
-    //             if(deviceName.equals("Fan")){
-    //                 log.info("🔍 FanState: {} -> {}", hex, entry.getKey());
-    //             }
-    //             return entry.getKey();
-    //         }
-    //     }
-
-    //     return hex;
-    // }
+    private String bytesToHexString(byte[] bytes) {
+        StringBuilder hexBuilder = new StringBuilder();
+        for (byte b : bytes) {
+            hexBuilder.append(String.format("%02X ", b));
+        }
+        return hexBuilder.toString().trim();
+    }
 
     private String convertHexToRawKey(Long packetFieldId, String hex) {
         Map<String, String> hexMap = hexToRawKeyMap.get(packetFieldId);
