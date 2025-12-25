@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.hyeonpyo.wallpadcontroller.device.state.DeviceStateManager;
 import com.hyeonpyo.wallpadcontroller.domain.builder.CommandBuilder;
-import com.hyeonpyo.wallpadcontroller.mqtt.sender.MqttSendService;
+import com.hyeonpyo.wallpadcontroller.ew11.Ew11Transport;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,11 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 public class ElfinCommandService {
 
     private final CommandBuilder commandBuilder;
-    private final MqttSendService mqttSendService;
+    private final Ew11Transport ew11Transport;
     private final DeviceStateManager deviceStateManager;
-
-    private static final String ELFIN_SEND_TOPIC = "ew11/send";
-
 
     public void sendCommand(String topic, MqttMessage message) {
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
@@ -55,7 +52,7 @@ public class ElfinCommandService {
                         .mapToObj(i -> String.format("%02X", packet[i]))
                         .collect(Collectors.joining(" "));
                 log.info("📦 생성된 HEX 패킷: {}", collect);
-                mqttSendService.publish(ELFIN_SEND_TOPIC, packet, 0, false);
+                ew11Transport.send(packet);
                 deviceStateManager.setTargetState(deviceType, deviceIndex, field, payload);
             }, () -> {
                 log.warn("⚠️ 패킷 생성 실패 - deviceType: {}, index: {}, field: {}, payload: {}", deviceType, deviceIndex, field, payload);
