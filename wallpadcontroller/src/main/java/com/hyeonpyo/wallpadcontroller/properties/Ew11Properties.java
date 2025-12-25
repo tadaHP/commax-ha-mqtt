@@ -9,7 +9,7 @@ import lombok.Data;
 @Configuration
 @ConfigurationProperties(prefix = "ew11")
 public class Ew11Properties {
-    private String transport = "mqtt";
+    private Ew11TransportType transport = Ew11TransportType.MQTT;
     private Mqtt mqtt = new Mqtt();
     private Udp udp = new Udp();
 
@@ -21,9 +21,19 @@ public class Ew11Properties {
 
     @Data
     public static class Udp {
+        private Send send = new Send();
+        private Listen listen = new Listen();
+    }
+
+    @Data
+    public static class Send {
         private String host = "127.0.0.1";
         private int port = 60000;
-        private int listenPort = 60001;
-        private int bufferSize = 2048;
+    }
+
+    @Data
+    public static class Listen {
+        private int port = 54747;
+        private int bufferSize = 512;
     }
 }

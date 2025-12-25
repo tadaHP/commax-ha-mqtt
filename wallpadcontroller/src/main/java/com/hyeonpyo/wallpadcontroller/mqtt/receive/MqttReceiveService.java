@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.hyeonpyo.wallpadcontroller.elfin.ElfinCommandService;
 import com.hyeonpyo.wallpadcontroller.elfin.ElfinReceiveService;
 import com.hyeonpyo.wallpadcontroller.properties.Ew11Properties;
+import com.hyeonpyo.wallpadcontroller.properties.Ew11TransportType;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PostConstruct;
@@ -20,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MqttReceiveService implements MqttCallback{
     private final String HA_COMMAND_TOPIC;
     private final String ew11ReceiveTopic;
-    private final String ew11Transport;
+    private final Ew11TransportType ew11Transport;
 
     private final ElfinReceiveService elfinReceiveService;
     private final ElfinCommandService elfinCommandService;
@@ -48,11 +49,11 @@ public class MqttReceiveService implements MqttCallback{
             mqttClient.setCallback(this);
             log.info("📞 MQTT 콜백 설정 완료: {}", this.getClass().getSimpleName());
 
-            if ("mqtt".equalsIgnoreCase(ew11Transport)) {
+            if (ew11Transport == Ew11TransportType.MQTT) {
                 mqttClient.subscribe(ew11ReceiveTopic, 0);
                 log.info("📥 MQTT 구독 완료: {}", ew11ReceiveTopic);
             } else {
-                log.info("ℹ️ EW11 수신은 {} 모드라 MQTT 구독을 생략합니다.", ew11Transport);
+                log.info("ℹ️ EW11 수신은 {} 모드라 MQTT 구독을 생략합니다.", ew11Transport.name().toLowerCase());
             }
 
             mqttClient.subscribe(HA_COMMAND_TOPIC + "/#", 0);
@@ -78,7 +79,7 @@ public class MqttReceiveService implements MqttCallback{
 
                 log.info("✅ MQTT 재연결 확인, 콜백 및 구독 재설정 시작");
                 mqttClient.setCallback(this);
-                if ("mqtt".equalsIgnoreCase(ew11Transport)) {
+                if (ew11Transport == Ew11TransportType.MQTT) {
                     mqttClient.subscribe(ew11ReceiveTopic, 0);
                 }
                 mqttClient.subscribe(HA_COMMAND_TOPIC + "/#", 0);
@@ -94,7 +95,7 @@ public class MqttReceiveService implements MqttCallback{
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-        if ("mqtt".equalsIgnoreCase(ew11Transport) && topic.equals(ew11ReceiveTopic)) {
+        if (ew11Transport == Ew11TransportType.MQTT && topic.equals(ew11ReceiveTopic)) {
             elfinReceiveService.publishDeviceState(message.getPayload());
         } else if (topic.startsWith(HA_COMMAND_TOPIC)) {
             elfinCommandService.sendCommand(topic, message);

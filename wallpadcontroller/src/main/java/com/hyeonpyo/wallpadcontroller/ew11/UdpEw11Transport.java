@@ -28,9 +28,9 @@ public class UdpEw11Transport implements Ew11Transport {
     @PostConstruct
     public void init() {
         try {
-            address = InetAddress.getByName(ew11Properties.getUdp().getHost());
+            address = InetAddress.getByName(ew11Properties.getUdp().getSend().getHost());
             socket = new DatagramSocket();
-            log.info("✅ EW11 UDP 송신 초기화 완료: {}:{}", ew11Properties.getUdp().getHost(), ew11Properties.getUdp().getPort());
+            log.info("✅ EW11 UDP 송신 초기화 완료: {}:{}", ew11Properties.getUdp().getSend().getHost(), ew11Properties.getUdp().getSend().getPort());
         } catch (Exception e) {
             log.error("❌ EW11 UDP 송신 초기화 실패", e);
         }
@@ -50,7 +50,7 @@ public class UdpEw11Transport implements Ew11Transport {
             return;
         }
         try {
-            DatagramPacket packet = new DatagramPacket(payload, payload.length, address, ew11Properties.getUdp().getPort());
+            DatagramPacket packet = new DatagramPacket(payload, payload.length, address, ew11Properties.getUdp().getSend().getPort());
             socket.send(packet);
         } catch (Exception e) {
             log.error("❌ EW11 UDP 송신 실패", e);
