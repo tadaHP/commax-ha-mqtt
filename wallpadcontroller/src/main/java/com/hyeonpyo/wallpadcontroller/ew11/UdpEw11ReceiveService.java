@@ -70,7 +70,6 @@ public class UdpEw11ReceiveService {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 byte[] payload = Arrays.copyOf(packet.getData(), packet.getLength());
-                log.info("📥 EW11 UDP 수신 bytes: {}", toHex(payload));
                 elfinReceiveService.publishDeviceState(payload);
             } catch (SocketTimeoutException e) {
                 // allow graceful shutdown
@@ -82,11 +81,4 @@ public class UdpEw11ReceiveService {
         }
     }
 
-    private String toHex(byte[] payload) {
-        StringBuilder builder = new StringBuilder(payload.length * 3);
-        for (byte b : payload) {
-            builder.append(String.format("%02X ", b));
-        }
-        return builder.toString().trim();
-    }
 }

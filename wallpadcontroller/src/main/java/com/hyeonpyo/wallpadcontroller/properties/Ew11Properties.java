@@ -28,7 +28,7 @@ public class Ew11Properties {
     @Data
     public static class Send {
         private String host = "127.0.0.1";
-        private int port = 60000;
+        private int port = 52493;
     }
 
     @Data
