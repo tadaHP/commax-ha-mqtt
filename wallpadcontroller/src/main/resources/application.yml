@@ -30,3 +30,10 @@ ew11:
     listen:
       port: ${EW11_UDP_LISTEN_PORT:54747}
       buffer-size: ${EW11_UDP_BUFFER_SIZE:512}
+  # EW11 HTTP 재부팅 (UDP/MQTT 모드 공통, 주기적으로 /cmd에 CID 20003 전송)
+  reboot:
+    enabled: ${EW11_REBOOT_ENABLED:false}
+    host: ${EW11_REBOOT_HOST:}
+    username: ${EW11_REBOOT_USERNAME:}
+    password: ${EW11_REBOOT_PASSWORD:}
+    interval: ${EW11_REBOOT_INTERVAL:12h}   # 예: 12h, 30m, 1d
