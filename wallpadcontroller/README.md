@@ -26,6 +26,8 @@ LICENSE는 AGPL 3.0 을 따라 자유로운 수전 및 재배포가 가능하나
 
 # 사용법
 
+**DB (H2):** 예전에 `SPRING_DATASOURCE_URL=jdbc:sqlite:...` 를 쓰던 compose는 **반드시 제거하거나** `jdbc:h2:file:...` 로 바꾸세요. SQLite URL이 남아 있으면 `org.h2.Driver`가 URL을 거부해 기동에 실패합니다. URL을 안 주면 docker 프로필 기본값(`jdbc:h2:file:/app/commax`)이 적용됩니다.
+
 사용 예제는 DockerCompose 기준으로 작성합니다.
 
 2가지 모드가있으며 1. MQTT(기존모드) 와 2. UDP 모드가 있습니다.
@@ -42,11 +44,10 @@ services:
     container_name: wallpadcontroller
     restart: unless-stopped
     volumes:
-      - commax-wallpad:/data
+      - commax-wallpad:/app
     ports:
       - "52394:8080"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/mydb.db
       - MQTT_HOST=192.168.0.0
       - MQTT_PORT=1883
       - MQTT_CLIENT_ID=wallpad-controller
@@ -71,12 +72,11 @@ services:
     container_name: wallpadcontroller
     restart: unless-stopped
     volumes:
-      - commax-wallpad:/data
+      - commax-wallpad:/app
     ports:
       - "52394:8080"
       - "54747:54747/udp"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:sqlite:/data/mydb.db
       - MQTT_HOST=192.168.0.0
       - MQTT_PORT=1883
       - MQTT_CLIENT_ID=wallpad-controller
@@ -118,10 +118,10 @@ volumes:
 
 ```yml
 volumes:
-  - <마운트할 볼륨 명>:/data
+  - <마운트할 볼륨 명>:/app
 ```
 
-위 내용은 /data 에 저장될 sqlite 정보를 지속해서 사용하기 위해 사용합니다
+위 볼륨은 **docker** 프로필 기본값으로 `/app` 에 생성되는 **H2 파일 DB**(`commax.mv.db` 등)를 컨테이너 재시작 후에도 유지하기 위해 사용합니다. 다른 경로에 두려면 `SPRING_DATASOURCE_URL=jdbc:h2:file:/원하는경로/이름` 으로 덮어쓰면 됩니다.
 
 추후 Mariadb등의 db로 변경 가능성 있습니다
 
