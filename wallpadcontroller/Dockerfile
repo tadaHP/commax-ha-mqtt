@@ -7,9 +7,9 @@ RUN useradd -r -u 10001 -g root appuser
 WORKDIR /opt/app
 COPY build/libs/wallpadcontroller-0.0.1-SNAPSHOT.jar app.jar
 
-# 데이터 디렉터리 준비
-RUN mkdir -p /data \
- && chown -R appuser:root /opt/app /data
+# 데이터 디렉터리 준비 (/app: H2 파일 DB 기본 경로)
+RUN mkdir -p /data /app \
+ && chown -R appuser:root /opt/app /data /app
 
 USER appuser
 EXPOSE 8080

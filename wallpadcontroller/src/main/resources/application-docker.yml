@@ -1,4 +1,6 @@
 spring:
   datasource:
-    url: jdbc:sqlite:/app/mydb.db
-    driver-class-name: org.sqlite.JDBC
+    # SPRING_DATASOURCE_URL 을 쓸 때는 반드시 jdbc:h2:... (sqlite URL 금지 — 드라이버는 H2만 로드됨)
+    # docker 전용 기본값: /app 아래 H2 파일 영속 (예: /app/commax.mv.db)
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:/app/commax;DB_CLOSE_ON_EXIT=FALSE}
+    driver-class-name: org.h2.Driver
