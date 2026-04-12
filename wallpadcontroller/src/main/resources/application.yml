@@ -5,6 +5,9 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+    properties:
+      # Docker 기본 TZ(UTC)만 쓰면 수신 시각·검색이 한국 시각과 어긋남. JDBC/Hibernate도 동일 존 사용.
+      hibernate.jdbc.time_zone: ${APP_TIME_ZONE:Asia/Seoul}
   datasource:
     # 프로필 없이 기동 시 인메모리 H2 (비영속). docker/develop에서 URL 오버라이드.
     url: jdbc:h2:mem:wallpad;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

@@ -15,6 +15,8 @@ USER appuser
 EXPOSE 8080
 
 # 컨테이너 환경변수로 프로필/자바옵션 제어 가능
+# @CreationTimestamp·검색(from/to)과 맞추기: JVM 기본 타임존(한국 벽시계 권장)
+ENV TZ=Asia/Seoul
 ENV SPRING_PROFILES_ACTIVE=docker
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75"
 

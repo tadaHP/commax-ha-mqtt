@@ -1,55 +1,53 @@
-<!-- src/main/resources/templates/packet-capture.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>실시간 패킷 캡처</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
-        .packet-entry.highlighted {
-            background-color: #FFF8B7 !important; /* 하이라이트 색상 */
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head('실시간 패킷 캡처')}"></head>
 <body class="bg-gray-100 font-sans">
+    <div th:replace="~{fragments/nav :: nav}"></div>
     <div class="container mx-auto p-8">
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
             <h1 class="text-3xl font-bold text-gray-800">실시간 패킷 캡처</h1>
-            <div class="flex items-center space-x-4">
-                <button id="startCaptureBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <div class="flex flex-wrap items-center gap-2">
+                <button id="startCaptureBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
                     캡처 시작
                 </button>
-                <button id="stopCaptureBtn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" disabled>
+                <button id="stopCaptureBtn" type="button" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50" disabled>
                     캡처 중지
                 </button>
-                 <button id="clearBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                <button id="clearBtn" type="button" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded">
                     화면 지우기
                 </button>
             </div>
         </div>
 
-        <!-- ▼▼▼ [수정] 컨트롤 영역 ▼▼▼ -->
-        <div class="flex items-center space-x-4 mb-6">
-            <div class="relative flex-grow">
-                <label for="filterDropdown" class="text-sm font-medium text-gray-700 mr-2">필터:</label>
-                <select id="filterDropdown" class="block appearance-none w-full bg-white border border-gray-300 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+            <div>
+                <label for="filterDropdown" class="block text-sm font-medium text-gray-700 mb-1">패킷</label>
+                <select id="filterDropdown" class="w-full bg-white border border-gray-300 rounded px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="ALL">전체</option>
-                    <option value="UNKNOWN">모르는 패킷</option>
+                    <option value="UNKNOWN">Unknown (미등록 헤더)</option>
                     <optgroup th:each="group : ${packetTypeGroups}" th:label="${group.key}">
                         <option th:value="${'GROUP_' + group.key}" th:text="${group.key + ' (전체)'}"></option>
                         <option th:each="type : ${group.value}" th:value="${type.header}" th:text="${type.displayName}"></option>
                     </optgroup>
                 </select>
             </div>
-            <div class="relative flex-grow">
-                <label for="highlightInput" class="text-sm font-medium text-gray-700 mr-2">하이라이트:</label>
-                <input type="text" id="highlightInput" placeholder="하이라이트할 텍스트 입력 (공백으로 구분)" class="block w-full bg-white border border-gray-300 rounded px-4 py-2 shadow focus:outline-none focus:shadow-outline">
+            <div>
+                <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">상태</label>
+                <select id="statusFilter" class="w-full bg-white border border-gray-300 rounded px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="ALL">전체</option>
+                    <option value="SUCCESS">SUCCESS</option>
+                    <option value="UNKNOWN_HEADER">Unknown</option>
+                </select>
+            </div>
+            <div>
+                <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">검색</label>
+                <input type="text" id="searchInput" placeholder="원문·메모에 포함되는 문자열 (공백으로 AND)"
+                       class="w-full bg-white border border-gray-300 rounded px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             </div>
         </div>
-        <!-- ▲▲▲ [수정] 컨트롤 영역 ▲▲▲ -->
+        <p class="text-sm text-gray-600 mb-4">패킷·상태·검색 조건을 <strong>모두</strong> 만족하는 행만 표시됩니다. 검색어가 비어 있으면 검색 조건은 적용되지 않습니다.</p>
 
-        <div id="capture-container" class="bg-white shadow-md rounded-lg p-4 space-y-2">
-        </div>
+        <div id="capture-container" class="bg-white shadow-md rounded-lg p-4 space-y-2 min-h-[120px]"></div>
     </div>
 
 <script th:inline="javascript">
@@ -60,11 +58,12 @@
     const clearBtn = document.getElementById('clearBtn');
     const container = document.getElementById('capture-container');
     const filterDropdown = document.getElementById('filterDropdown');
-    const highlightInput = document.getElementById('highlightInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const searchInput = document.getElementById('searchInput');
     let eventSource;
 
     const packetTypeGroups = /*[[${packetTypeGroups}]]*/ {};
-    
+
     const headerToDisplayName = {};
     const headerToGroupNameMap = {};
     for (const [groupName, types] of Object.entries(packetTypeGroups)) {
@@ -75,65 +74,87 @@
     }
     const knownHeaders = Object.keys(headerToDisplayName);
 
-    let currentFilter = 'ALL';
-    let highlightTerms = [];
+    let currentPacketFilter = 'ALL';
+    let currentStatusFilter = 'ALL';
+    let searchTerms = [];
 
-    function applyHighlight() {
-        const packets = container.querySelectorAll('.packet-entry');
-        packets.forEach(packetEl => {
-            const text = packetEl.textContent;
-            const shouldHighlight = highlightTerms.length > 0 && highlightTerms.some(term => text.includes(term));
-            
-            if (shouldHighlight) {
-                packetEl.classList.add('highlighted');
-            } else {
-                packetEl.classList.remove('highlighted');
-            }
+    function normalizeHexSpaces(s) {
+        return (s || '').replace(/\s+/g, '').toUpperCase();
+    }
+
+    function refreshSearchTerms() {
+        const raw = searchInput.value.trim();
+        searchTerms = raw ? raw.split(/\s+/).filter(t => t.length > 0) : [];
+    }
+
+    function passesPacketTypeFilter(packetEl) {
+        const header = packetEl.dataset.header;
+        const groupName = packetEl.dataset.groupName || '';
+        const isKnown = packetEl.dataset.isKnown === 'true';
+        const isGroupFilter = currentPacketFilter.startsWith('GROUP_');
+        const groupFilterName = isGroupFilter ? currentPacketFilter.substring(6) : null;
+
+        if (isGroupFilter) {
+            return groupName === groupFilterName;
+        }
+        if (currentPacketFilter === 'ALL') {
+            return true;
+        }
+        if (currentPacketFilter === 'UNKNOWN') {
+            return !isKnown;
+        }
+        return currentPacketFilter === header;
+    }
+
+    function passesStatusFilter(packetEl) {
+        if (currentStatusFilter === 'ALL') {
+            return true;
+        }
+        return (packetEl.dataset.status || '') === currentStatusFilter;
+    }
+
+    function passesSearchFilter(packetEl) {
+        if (searchTerms.length === 0) {
+            return true;
+        }
+        const raw = normalizeHexSpaces(packetEl.dataset.rawData || '');
+        const notes = (packetEl.dataset.notes || '').toUpperCase();
+        const blob = raw + ' ' + notes;
+        return searchTerms.every(term => {
+            const t = term.toUpperCase();
+            const tCompact = normalizeHexSpaces(term);
+            return blob.includes(t) || raw.includes(tCompact) || notes.includes(t);
         });
     }
 
-    highlightInput.addEventListener('input', () => {
-        const rawText = highlightInput.value.trim();
-        highlightTerms = rawText ? rawText.split(' ').filter(t => t.length > 0) : [];
-        applyHighlight();
+    function applyAllFilters() {
+        container.querySelectorAll('.packet-entry').forEach(packetEl => {
+            const show = passesPacketTypeFilter(packetEl) && passesStatusFilter(packetEl) && passesSearchFilter(packetEl);
+            packetEl.style.display = show ? 'flex' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', () => {
+        refreshSearchTerms();
+        applyAllFilters();
     });
 
     filterDropdown.addEventListener('change', () => {
-        currentFilter = filterDropdown.value;
-        applyFilter();
+        currentPacketFilter = filterDropdown.value;
+        applyAllFilters();
     });
 
-    function applyFilter() {
-        const isGroupFilter = currentFilter.startsWith('GROUP_');
-        const groupFilterName = isGroupFilter ? currentFilter.substring(6) : null;
-
-        const packets = container.querySelectorAll('.packet-entry');
-        packets.forEach(packetEl => {
-            const header = packetEl.dataset.header;
-            const groupName = packetEl.dataset.groupName;
-            const isKnown = packetEl.dataset.isKnown === 'true';
-
-            let shouldShow = false;
-            if (isGroupFilter) {
-                shouldShow = groupName === groupFilterName;
-            } else if (currentFilter === 'ALL') {
-                shouldShow = true;
-            } else if (currentFilter === 'UNKNOWN') {
-                shouldShow = !isKnown;
-            } else { // Specific header filter
-                shouldShow = currentFilter === header;
-            }
-
-            packetEl.style.display = shouldShow ? 'flex' : 'none';
-        });
-    }
+    statusFilter.addEventListener('change', () => {
+        currentStatusFilter = statusFilter.value;
+        applyAllFilters();
+    });
 
     startBtn.addEventListener('click', async () => {
         try {
             await fetch('/capture/start', { method: 'POST' });
             startBtn.disabled = true;
             stopBtn.disabled = false;
-            
+
             eventSource = new EventSource('/capture/events');
             eventSource.addEventListener('packet', event => {
                 const packet = JSON.parse(event.data);
@@ -143,7 +164,6 @@
             eventSource.onerror = () => {
                 stopCapture();
             };
-
         } catch (error) {
             console.error('Error starting capture:', error);
         }
@@ -152,6 +172,7 @@
     const stopCapture = async () => {
         if (eventSource) {
             eventSource.close();
+            eventSource = null;
         }
         try {
             await fetch('/capture/stop', { method: 'POST' });
@@ -162,56 +183,47 @@
     };
 
     stopBtn.addEventListener('click', stopCapture);
-    clearBtn.addEventListener('click', () => container.innerHTML = '');
+    clearBtn.addEventListener('click', () => {
+        container.innerHTML = '';
+    });
 
     function getPacketHeader(rawData) {
-        return rawData.substring(0, 2);
+        if (!rawData) {
+            return '';
+        }
+        const compact = rawData.replace(/\s+/g, '').toUpperCase();
+        return compact.length >= 2 ? compact.substring(0, 2) : '';
     }
 
     function addPacketToView(packet) {
-        const header = getPacketHeader(packet.rawData);
+        const rawData = packet.rawData || '';
+        const header = getPacketHeader(rawData);
         const isKnown = knownHeaders.includes(header);
         const groupName = headerToGroupNameMap[header];
         const displayName = headerToDisplayName[header] || 'Unknown';
+        const status = packet.status || '';
 
         const packetEl = document.createElement('div');
-        packetEl.className = 'packet-entry font-mono text-sm p-2 border-b flex justify-between items-center';
-        
+        packetEl.className = 'packet-entry font-mono text-sm p-2 border-b border-gray-100 flex justify-between items-center gap-2 flex-wrap';
         packetEl.dataset.header = header;
-        packetEl.dataset.isKnown = isKnown;
-        if (groupName) {
-            packetEl.dataset.groupName = groupName;
-        }
+        packetEl.dataset.isKnown = String(isKnown);
+        packetEl.dataset.groupName = groupName || '';
+        packetEl.dataset.rawData = rawData;
+        packetEl.dataset.notes = packet.notes || '';
+        packetEl.dataset.status = status;
 
+        const received = packet.receivedAt ? new Date(packet.receivedAt) : new Date();
+        const timeStr = received.toLocaleTimeString();
         const headerText = `${header} (${displayName})`;
+        const statusLabel = status === 'UNKNOWN_HEADER' ? 'Unknown' : status;
+
         packetEl.innerHTML = `
-            <span>[${new Date(packet.receivedAt).toLocaleTimeString()}] ${packet.rawData}</span>
-            <span class="text-xs font-semibold text-gray-600">${headerText}</span>
+            <span class="break-all">[${timeStr}] ${rawData}</span>
+            <span class="text-xs font-semibold text-gray-600 shrink-0">${headerText} · <span class="text-indigo-600">${statusLabel}</span></span>
         `;
 
-        const text = packetEl.textContent;
-        const shouldHighlight = highlightTerms.length > 0 && highlightTerms.some(term => text.includes(term));
-        if (shouldHighlight) {
-            packetEl.classList.add('highlighted');
-        }
-
-        const isGroupFilter = currentFilter.startsWith('GROUP_');
-        const groupFilterName = isGroupFilter ? currentFilter.substring(6) : null;
-
-        let shouldShow = false;
-        if (isGroupFilter) {
-            shouldShow = groupName === groupFilterName;
-        } else if (currentFilter === 'ALL') {
-            shouldShow = true;
-        } else if (currentFilter === 'UNKNOWN') {
-            shouldShow = !isKnown;
-        } else { // Specific header filter
-            shouldShow = currentFilter === header;
-        }
-
-        packetEl.style.display = shouldShow ? 'flex' : 'none';
-
         container.prepend(packetEl);
+        applyAllFilters();
     }
 
     /*]]>*/

@@ -26,6 +26,7 @@ flowchart TD
 | `GET /` | 패킷 커버리지 대시보드 (`coverage.html`) |
 | `GET /packet-logs` | 수신 패킷 로그 페이지 |
 | `GET /packet-capture` | 패킷 캡처 UI |
+| `GET /packet-verify` | 입력 HEX 패턴 일치 시 마지막 수신 시각 모니터 (SSE) |
 | `POST /capture/start` | 캡처 시작 |
 | `POST /capture/stop` | 캡처 중지 |
 | `GET /capture/events` | SSE 이벤트 스트림 |

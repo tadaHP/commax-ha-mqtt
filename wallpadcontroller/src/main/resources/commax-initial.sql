@@ -163,9 +163,9 @@ INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (130, 19, 
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (131, 19, 5, 'unknown3');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (132, 19, 6, 'empty');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (133, 19, 7, 'checksum');
-INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (134, 20, 1, 'power');
-INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (135, 20, 2, 'deviceId');
-INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (136, 20, 3, 'floor');
+INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (134, 20, 1, 'deviceId');
+INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (135, 20, 2, 'floor');
+INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (136, 20, 3, 'empty');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (137, 20, 4, 'empty');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (138, 20, 5, 'empty');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (139, 20, 6, 'empty');
@@ -261,9 +261,7 @@ INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUE
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (87, 129, 'fixed', '00', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (88, 130, 'fixed', '08', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (89, 131, 'fixed', '15', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'ON', '01', 'power로 추정됨..');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (91, 135, 'id', 'FF', '기기 번호로 추정됨..');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (92, 136, 'floor', 'FF', '층으로 추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'id', 'FF', '호기 바이트; 매핑 없으면 hex 그대로');
 
 -- command_mapping_rule
 -- Light
