@@ -1,6 +1,7 @@
 package com.hyeonpyo.wallpadcontroller.elfin;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -9,7 +10,10 @@ import org.springframework.stereotype.Service;
 
 import com.hyeonpyo.wallpadcontroller.device.state.DeviceStateManager;
 import com.hyeonpyo.wallpadcontroller.domain.builder.CommandBuilder;
+import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntity;
+import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntityRepository;
 import com.hyeonpyo.wallpadcontroller.ew11.Ew11Transport;
+import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +26,8 @@ public class ElfinCommandService {
     private final CommandBuilder commandBuilder;
     private final Ew11Transport ew11Transport;
     private final DeviceStateManager deviceStateManager;
+    private final DeviceEntityRepository deviceEntityRepository;
+    private final MqttProperties mqttProperties;
 
     public void sendCommand(String topic, MqttMessage message) {
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
@@ -43,6 +49,17 @@ public class ElfinCommandService {
             deviceIndex = Integer.parseInt(indexStr);
         } catch (NumberFormatException e) {
             log.warn("⚠️ device index 파싱 실패: {}", deviceInfo);
+            return;
+        }
+
+        String uniqueId = mqttProperties.getHaTopic() + "_" + deviceType + "_" + deviceIndex;
+        Optional<DeviceEntity> registered = deviceEntityRepository.findById(uniqueId);
+        if (registered.isEmpty()) {
+            log.warn("⚠️ 등록되지 않은 기기 명령 무시: {}", uniqueId);
+            return;
+        }
+        if (Boolean.FALSE.equals(registered.get().getUsed())) {
+            log.warn("⚠️ MQTT 비활성(used=false) 기기 명령 무시: {}", uniqueId);
             return;
         }
 

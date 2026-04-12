@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('패킷 테스트 송신')}"></head>
+<body id="packet-test-page" class="bg-gray-100 font-sans"
+      th:data-api-send="@{/api/packet-test/send}">
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div class="container mx-auto p-8 max-w-4xl">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">패킷 테스트 송신</h1>
+    <p class="text-gray-600 mb-6">
+        8바이트를 HEX(각 2자리)로 입력한 뒤 <strong>EW11로 전송</strong>합니다.
+        <code class="bg-gray-200 px-1 rounded text-sm">ew11.transport</code> 설정(MQTT/UDP)에 따라 실제 브로커 또는 UDP 목적지로 나갑니다.
+    </p>
+
+    <div class="bg-white shadow-md rounded-lg p-6 space-y-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            <div th:each="i : ${#numbers.sequence(0, 7)}">
+                <label th:for="|b${i}|" class="block text-xs font-medium text-gray-600 mb-1"
+                       th:text="|바이트 ${i + 1}|">바이트 1</label>
+                <input type="text" maxlength="2" th:id="|b${i}|" th:data-idx="${i}"
+                       class="byte-input w-full font-mono uppercase border border-gray-300 rounded px-2 py-2 text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="00">
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 items-center">
+            <button id="sendBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+                테스트 전송
+            </button>
+            <button id="exampleBtn" type="button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded">
+                예시 채우기 (A2 …)
+            </button>
+        </div>
+
+        <p id="resultLine" class="text-sm font-mono text-gray-800 min-h-[1.5rem]"></p>
+        <p id="errorLine" class="text-sm text-red-600 hidden"></p>
+    </div>
+</div>
+
+<script th:inline="none">
+/*<![CDATA[*/
+(function () {
+    var root = document.getElementById('packet-test-page');
+    var sendUrl = root.getAttribute('data-api-send');
+    var inputs = [];
+    for (var i = 0; i < 8; i++) {
+        inputs.push(document.getElementById('b' + i));
+    }
+    var sendBtn = document.getElementById('sendBtn');
+    var exampleBtn = document.getElementById('exampleBtn');
+    var resultLine = document.getElementById('resultLine');
+    var errorLine = document.getElementById('errorLine');
+
+    function normalizeByteInput(el) {
+        var v = (el.value || '').trim().replace(/\s+/g, '');
+        el.value = v.toUpperCase().slice(0, 2);
+    }
+
+    inputs.forEach(function (el) {
+        el.addEventListener('input', function () {
+            normalizeByteInput(el);
+        });
+        el.addEventListener('blur', function () {
+            normalizeByteInput(el);
+        });
+    });
+
+    exampleBtn.addEventListener('click', function () {
+        var ex = ['A2', '01', '01', '00', '00', '15', '00', 'B9'];
+        for (var i = 0; i < 8; i++) {
+            inputs[i].value = ex[i];
+        }
+        resultLine.textContent = '';
+        errorLine.classList.add('hidden');
+    });
+
+    sendBtn.addEventListener('click', async function () {
+        errorLine.classList.add('hidden');
+        resultLine.textContent = '';
+        var bytes = [];
+        for (var j = 0; j < 8; j++) {
+            normalizeByteInput(inputs[j]);
+            bytes.push(inputs[j].value);
+        }
+        try {
+            var res = await fetch(sendUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ bytes: bytes })
+            });
+            var data = await res.json().catch(function () {
+                return {};
+            });
+            if (!res.ok) {
+                throw new Error((data && data.error) ? data.error : ('HTTP ' + res.status));
+            }
+            if (data.ok) {
+                resultLine.textContent = '전송 완료: ' + (data.hex || '');
+            } else {
+                throw new Error('응답 형식 오류');
+            }
+        } catch (e) {
+            errorLine.textContent = (e && e.message) ? e.message : String(e);
+            errorLine.classList.remove('hidden');
+        }
+    });
+})();
+/*]]>*/
+</script>
+</body>
+</html>

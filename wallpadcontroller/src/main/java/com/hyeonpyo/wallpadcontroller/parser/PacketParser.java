@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@DependsOn("evParsingStructureMigration")
 @RequiredArgsConstructor
 public class PacketParser {
 
@@ -208,7 +210,7 @@ public class PacketParser {
             case "Gas":
                 return new GasState(fields.get("power"));
             case "EV":
-                return new ElevatorState(fields.get("power"), fields.get("floor"));
+                return new ElevatorState(fields.get("deviceId"), fields.get("floor"));
             default:
                 log.warn("⚠️ toDeviceState: Unknown deviceName '{}', fields={}", deviceName, fields);
                 return null;

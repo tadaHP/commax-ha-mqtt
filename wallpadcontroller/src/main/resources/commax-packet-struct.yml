@@ -497,20 +497,13 @@ EV:
     header: "23"
     structure:
       "1":
-        name: power
-        values:
-          "on": "01"
-        memo: power로 추정됨..
-      "2":
         name: deviceId
-        values:
-          "id": "FF"
-        memo: 기기 번호로 추정됨..
-      "3":
+        memo: EV 호기(1~18 등). 기기 인덱스·HA ev_status_N 의 N으로 쓰임 (PacketParser extractDeviceIndex).
+      "2":
         name: floor
-        values:
-          "floor": "FF"
-        memo: 층으로 추정됨..
+        memo: 해당 호기의 현재 위치·층(한 바이트). 지하/지상 구분은 패킷에 없음.
+      "3":
+        name: empty
       "4": 
         name: empty
       "5": 

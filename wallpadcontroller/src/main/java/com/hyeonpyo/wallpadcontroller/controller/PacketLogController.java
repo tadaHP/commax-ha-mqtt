@@ -1,8 +1,5 @@
 package com.hyeonpyo.wallpadcontroller.controller;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +15,9 @@ public class PacketLogController {
 
     private final PacketLogService packetLogService;
 
+    /** 목록·검색·페이지네이션은 {@code GET /api/packet-logs} + 클라이언트 렌더링 */
     @GetMapping("/packet-logs")
-    public String listPacketLogs(
-            Model model,
-            @PageableDefault(size = 20, sort = "receivedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        model.addAttribute("packetPage", packetLogService.findAll(pageable));
+    public String listPacketLogs() {
         return "packet-logs";
     }
 

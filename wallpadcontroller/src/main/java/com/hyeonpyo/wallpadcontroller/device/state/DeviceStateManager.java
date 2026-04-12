@@ -94,6 +94,14 @@ public class DeviceStateManager {
         targetState.computeIfAbsent(key, k -> new TargetEntry(targetValue));
     }
 
+    /** MQTT에서 기기를 내릴 때 해당 기기의 상태·목표 키를 제거합니다. */
+    public void clearStateForDevice(String deviceName, int deviceIndex) {
+        String prefix = "state/" + deviceName + deviceIndex + "/";
+        latestState.keySet().removeIf(k -> k.startsWith(prefix));
+        lastPublishedState.keySet().removeIf(k -> k.startsWith(prefix));
+        targetState.keySet().removeIf(k -> k.startsWith(prefix));
+    }
+
     private void resendCommand(String key, String targetValue) {
         try {
             String[] parts = key.split("/");

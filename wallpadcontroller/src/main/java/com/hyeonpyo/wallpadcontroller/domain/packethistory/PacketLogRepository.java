@@ -1,13 +1,13 @@
 package com.hyeonpyo.wallpadcontroller.domain.packethistory;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Set;
 
-public interface PacketLogRepository extends JpaRepository<PacketLog, Long> {
+public interface PacketLogRepository extends JpaRepository<PacketLog, Long>, JpaSpecificationExecutor<PacketLog> {
 
     @Query("SELECT DISTINCT SUBSTRING(REPLACE(p.rawData, ' ', ''), 1, 2) FROM PacketLog p WHERE p.status = 'SUCCESS'")
     Set<String> findDistinctSuccessHeaders();

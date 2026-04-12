@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<!--
+  공통 <head>: 각 페이지에서
+  <head th:replace="~{fragments/layout :: head('페이지 제목')}"></head>
+  처럼 치환해 사용합니다. 네비게이션은 fragments/nav :: nav 를 그대로 쓰면 됩니다.
+-->
+<head th:fragment="head (pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle}">Wallpad</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet"/>
+</head>
+</html>
