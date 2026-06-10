@@ -7,7 +7,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,6 +20,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(indexes = {
+        @Index(name = "idx_packet_log_received_at", columnList = "receivedAt"),
+        @Index(name = "idx_packet_log_status_received_at", columnList = "status, receivedAt")
+})
 @Getter
 @Builder
 @AllArgsConstructor

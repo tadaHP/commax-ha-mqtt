@@ -41,3 +41,11 @@ ew11:
     username: ${EW11_REBOOT_USERNAME:}
     password: ${EW11_REBOOT_PASSWORD:}
     interval: ${EW11_REBOOT_INTERVAL:12h}
+
+packet-log:
+  retention:
+    enabled: ${PACKET_LOG_RETENTION_ENABLED:true}
+    days: ${PACKET_LOG_RETENTION_DAYS:14}
+    batch-size: ${PACKET_LOG_RETENTION_BATCH_SIZE:5000}
+    cleanup-cron: "${PACKET_LOG_RETENTION_CLEANUP_CRON:0 30 3 * * *}"
+    zone: "${PACKET_LOG_RETENTION_ZONE:Asia/Seoul}"

@@ -45,4 +45,16 @@
 |---------------|------|
 | `spring.datasource.url` / `SPRING_DATASOURCE_URL` | H2 JDBC URL만 허용 (docker 기본: `jdbc:h2:file:/app/commax`). 예전 SQLite URL(`jdbc:sqlite:...`)을 넣으면 H2 드라이버와 불일치로 기동 실패. 미설정 시 docker는 기본 파일 URL 사용. |
 
+## 패킷 로그 보존
+
+패킷 로그는 기본적으로 14일만 보관하고, 매일 03:30(Asia/Seoul)에 오래된 로그를 배치 단위로 삭제합니다.
+
+| 키 / 환경변수 | 설명 | 기본값 |
+|---------------|------|--------|
+| `packet-log.retention.enabled` / `PACKET_LOG_RETENTION_ENABLED` | 자동 정리 사용 여부 | `true` |
+| `packet-log.retention.days` / `PACKET_LOG_RETENTION_DAYS` | 보관 기간(일) | `14` |
+| `packet-log.retention.batch-size` / `PACKET_LOG_RETENTION_BATCH_SIZE` | 한 번에 삭제할 row 수 | `5000` |
+| `packet-log.retention.cleanup-cron` / `PACKET_LOG_RETENTION_CLEANUP_CRON` | 정리 스케줄 cron | `0 30 3 * * *` |
+| `packet-log.retention.zone` / `PACKET_LOG_RETENTION_ZONE` | cron 기준 시간대 | `Asia/Seoul` |
+
 Docker 포트 매핑 예시는 루트 README의 compose 스니펫을 참고하면 됩니다.
