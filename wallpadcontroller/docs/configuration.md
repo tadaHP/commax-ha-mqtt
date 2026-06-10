@@ -47,14 +47,14 @@
 
 ## 패킷 로그 보존
 
-패킷 로그는 기본적으로 14일만 보관하고, 매일 03:30(Asia/Seoul)에 오래된 로그를 배치 단위로 삭제합니다.
+패킷 로그는 기본적으로 14일만 보관합니다. 앱 기동 후 24시간 뒤 첫 정리를 실행하고, 이후 정리 작업이 끝난 시점부터 24시간마다 오래된 로그를 배치 단위로 삭제합니다.
 
 | 키 / 환경변수 | 설명 | 기본값 |
 |---------------|------|--------|
 | `packet-log.retention.enabled` / `PACKET_LOG_RETENTION_ENABLED` | 자동 정리 사용 여부 | `true` |
 | `packet-log.retention.days` / `PACKET_LOG_RETENTION_DAYS` | 보관 기간(일) | `14` |
 | `packet-log.retention.batch-size` / `PACKET_LOG_RETENTION_BATCH_SIZE` | 한 번에 삭제할 row 수 | `5000` |
-| `packet-log.retention.cleanup-cron` / `PACKET_LOG_RETENTION_CLEANUP_CRON` | 정리 스케줄 cron | `0 30 3 * * *` |
-| `packet-log.retention.zone` / `PACKET_LOG_RETENTION_ZONE` | cron 기준 시간대 | `Asia/Seoul` |
+| `packet-log.retention.initial-delay-ms` / `PACKET_LOG_RETENTION_INITIAL_DELAY_MS` | 기동 후 첫 정리까지 대기 시간(ms) | `86400000` |
+| `packet-log.retention.cleanup-interval-ms` / `PACKET_LOG_RETENTION_CLEANUP_INTERVAL_MS` | 정리 완료 후 다음 정리까지 대기 시간(ms) | `86400000` |
 
 Docker 포트 매핑 예시는 루트 README의 compose 스니펫을 참고하면 됩니다.

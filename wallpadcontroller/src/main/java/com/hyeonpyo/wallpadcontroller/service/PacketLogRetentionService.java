@@ -21,7 +21,9 @@ public class PacketLogRetentionService {
     private final PacketLogRepository packetLogRepository;
     private final PacketLogRetentionProperties properties;
 
-    @Scheduled(cron = "${packet-log.retention.cleanup-cron:0 30 3 * * *}", zone = "${packet-log.retention.zone:Asia/Seoul}")
+    @Scheduled(
+            initialDelayString = "${packet-log.retention.initial-delay-ms:86400000}",
+            fixedDelayString = "${packet-log.retention.cleanup-interval-ms:86400000}")
     public void cleanupOldPacketLogs() {
         if (!properties.isEnabled()) {
             return;

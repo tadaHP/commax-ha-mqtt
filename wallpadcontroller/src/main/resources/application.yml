@@ -47,5 +47,5 @@ packet-log:
     enabled: ${PACKET_LOG_RETENTION_ENABLED:true}
     days: ${PACKET_LOG_RETENTION_DAYS:14}
     batch-size: ${PACKET_LOG_RETENTION_BATCH_SIZE:5000}
-    cleanup-cron: "${PACKET_LOG_RETENTION_CLEANUP_CRON:0 30 3 * * *}"
-    zone: "${PACKET_LOG_RETENTION_ZONE:Asia/Seoul}"
+    initial-delay-ms: ${PACKET_LOG_RETENTION_INITIAL_DELAY_MS:86400000}
+    cleanup-interval-ms: ${PACKET_LOG_RETENTION_CLEANUP_INTERVAL_MS:86400000}
