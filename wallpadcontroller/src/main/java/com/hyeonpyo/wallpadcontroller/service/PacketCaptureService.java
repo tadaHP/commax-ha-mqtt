@@ -1,6 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.service;
 
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
+import com.hyeonpyo.wallpadcontroller.dto.CapturedPacketEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -33,7 +33,7 @@ public class PacketCaptureService {
         return emitter;
     }
 
-    public void sendPacket(PacketLog packetLog) {
+    public void sendPacket(CapturedPacketEvent packet) {
         if (!isCapturing) {
             return;
         }
@@ -42,7 +42,7 @@ public class PacketCaptureService {
             try {
                 emitter.send(SseEmitter.event()
                         .name("packet")
-                        .data(packetLog)); // Jackson이 JSON으로 변환
+                        .data(packet));
             } catch (IOException e) {
                 emitter.complete();
             }

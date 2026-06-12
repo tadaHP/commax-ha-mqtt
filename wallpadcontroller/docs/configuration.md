@@ -45,16 +45,12 @@
 |---------------|------|
 | `spring.datasource.url` / `SPRING_DATASOURCE_URL` | H2 JDBC URL만 허용 (docker 기본: `jdbc:h2:file:/app/commax`). 예전 SQLite URL(`jdbc:sqlite:...`)을 넣으면 H2 드라이버와 불일치로 기동 실패. 미설정 시 docker는 기본 파일 URL 사용. |
 
-## 패킷 로그 보존
+## seen_packet (관측된 유니크 패킷)
 
-패킷 로그는 기본적으로 14일만 보관합니다. 앱 기동 후 24시간 뒤 첫 정리를 실행하고, 이후 정리 작업이 끝난 시점부터 24시간마다 오래된 로그를 배치 단위로 삭제합니다.
+SUCCESS 패킷의 **raw hex 전체**를 유니크하게 `seen_packet` 테이블과 메모리(`SeenPacketMemoryStore`)에 보관합니다. 이미 본 패킷은 DB insert 없이 메모리 `lastSeenAt`만 갱신합니다. **자동 삭제·rotation은 없습니다.**
 
-| 키 / 환경변수 | 설명 | 기본값 |
-|---------------|------|--------|
-| `packet-log.retention.enabled` / `PACKET_LOG_RETENTION_ENABLED` | 자동 정리 사용 여부 | `true` |
-| `packet-log.retention.days` / `PACKET_LOG_RETENTION_DAYS` | 보관 기간(일) | `14` |
-| `packet-log.retention.batch-size` / `PACKET_LOG_RETENTION_BATCH_SIZE` | 한 번에 삭제할 row 수 | `5000` |
-| `packet-log.retention.initial-delay-ms` / `PACKET_LOG_RETENTION_INITIAL_DELAY_MS` | 기동 후 첫 정리까지 대기 시간(ms) | `86400000` |
-| `packet-log.retention.cleanup-interval-ms` / `PACKET_LOG_RETENTION_CLEANUP_INTERVAL_MS` | 정리 완료 후 다음 정리까지 대기 시간(ms) | `86400000` |
+- 커버리지(`/`, `/api/coverage`): 메모리의 seen 패킷을 파싱해 필드별 수신 현황 집계
+- 관측 패킷 페이지: `GET /seen-packets`, `GET /api/seen-packets`
+- 실시간 캡처(`/packet-capture`): SSE로만 표시, DB에 저장하지 않음
 
 Docker 포트 매핑 예시는 루트 README의 compose 스니펫을 참고하면 됩니다.

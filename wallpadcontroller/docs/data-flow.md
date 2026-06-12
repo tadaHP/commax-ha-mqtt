@@ -28,7 +28,7 @@ sequenceDiagram
 
   RX->>RX: bytes → hex
   RX->>PP: parseMultiple(hex)
-  PP->>DB: 패킷 로그·정의 조회 등
+  PP->>DB: seen_packet(유니크)·device_type 정의 조회
   PP-->>RX: List ParsedPacket
 
   loop STATE 패킷

@@ -2,12 +2,11 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('등록 기기 관리')}"></head>
 <style>
-    /* Tailwind/외부 CSS가 버튼을 비우는 환경에서도 보이도록 고정 */
-    .device-save-cell {
+    .device-action-cell {
         background-color: #f8fafc !important;
         box-shadow: inset 0 0 0 1px #e2e8f0;
     }
-    .device-save-select {
+    .device-filter-select {
         background-color: #ffffff !important;
         color: #0f172a !important;
         border: 1px solid #94a3b8 !important;
@@ -16,36 +15,53 @@
         font-size: 0.875rem;
         min-width: 10.5rem;
     }
-    .device-save-btn {
+    .device-toggle-btn {
         display: inline-block;
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+    }
+    .device-toggle-btn:disabled {
+        cursor: default;
+        opacity: 1;
+    }
+    .device-toggle-btn--active {
         background-color: #047857 !important;
         color: #ffffff !important;
-        border: 2px solid #065f46 !important;
-        border-radius: 0.375rem;
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        border-color: #065f46 !important;
     }
-    .device-save-btn:hover {
+    .device-toggle-btn--active:not(:disabled):hover {
         background-color: #059669 !important;
-        border-color: #047857 !important;
     }
-    .device-save-btn:active {
-        background-color: #065f46 !important;
+    .device-toggle-btn--active:disabled {
+        box-shadow: inset 0 0 0 2px #065f46;
+    }
+    .device-toggle-btn--inactive {
+        background-color: #ffffff !important;
+        color: #475569 !important;
+        border-color: #94a3b8 !important;
+    }
+    .device-toggle-btn--inactive:not(:disabled):hover {
+        background-color: #f1f5f9 !important;
+        border-color: #64748b !important;
+    }
+    .device-toggle-btn--inactive:disabled {
+        background-color: #e2e8f0 !important;
+        color: #334155 !important;
+        border-color: #64748b !important;
     }
 </style>
 <body class="bg-gray-100 font-sans">
 <div th:replace="~{fragments/nav :: nav}"></div>
 <div class="container mx-auto p-8 max-w-6xl">
     <h1 class="text-3xl font-bold text-gray-800 mb-2">등록 기기 관리</h1>
-    <p class="text-gray-600 mb-2 text-sm">
-        새로 잡힌 기기는 기본 비활성입니다. <strong>활성화</strong>한 기기만 Home Assistant discovery 및 상태 MQTT에 반영됩니다.
-        DB에 <code class="bg-gray-200 px-1 rounded">used</code>가 비어 있는 기존 행은 예전처럼 활성으로 취급됩니다.
-    </p>
-    <p class="text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mb-6 text-sm">
-        표 오른쪽 끝 <strong>「상태·저장」</strong> 열에 셀렉트와 <strong class="text-amber-900">저장</strong> 버튼이 있습니다. 가로가 넓으면 아래 표를 <strong>오른쪽으로 스크롤</strong>해 보세요.
+    <p class="text-gray-600 mb-6 text-sm">
+        새로 잡힌 기기는 기본 비활성입니다. <strong>활성</strong>으로 바꾼 기기만 Home Assistant discovery 및 상태 MQTT에 반영됩니다.
+        현재 상태는 <strong>MQTT/HA</strong> 열에서 확인하고, 오른쪽 버튼으로 바로 전환할 수 있습니다.
     </p>
 
     <div id="deviceSaveBanner" class="hidden mb-4 p-3 rounded text-sm"></div>
@@ -56,12 +72,11 @@
         <div>
             <label for="deviceUsedFilter" class="block text-sm font-medium text-gray-700 mb-1">MQTT/HA 노출 상태</label>
             <select id="deviceUsedFilter" name="used"
-                    class="device-save-select min-w-[12rem]"
+                    class="device-filter-select min-w-[12rem]"
                     onchange="this.form.submit()">
                 <option value="all" th:selected="${filterUsed == 'all'}">전체</option>
-                <option value="active" th:selected="${filterUsed == 'active'}">활성 (used = true)</option>
-                <option value="inactive" th:selected="${filterUsed == 'inactive'}">비활성 (used = false)</option>
-                <option value="null" th:selected="${filterUsed == 'null'}">null (레거시·기본 노출)</option>
+                <option value="active" th:selected="${filterUsed == 'active'}">활성</option>
+                <option value="inactive" th:selected="${filterUsed == 'inactive'}">비활성</option>
             </select>
         </div>
     </form>
@@ -75,35 +90,34 @@
                 <th class="px-4 py-3 font-semibold font-mono text-xs">object_id (HA entity 이름)</th>
                 <th class="px-4 py-3 font-semibold max-w-[12rem]">unique_id</th>
                 <th class="px-4 py-3 font-semibold">MQTT/HA</th>
-                <th class="px-4 py-3 font-semibold min-w-[13rem] whitespace-nowrap sticky right-0 z-20 bg-slate-100 border-l border-slate-200 shadow-sm">상태·저장</th>
+                <th class="px-4 py-3 font-semibold min-w-[11rem] whitespace-nowrap sticky right-0 z-20 bg-slate-100 border-l border-slate-200 shadow-sm">변경</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="d, row : ${devices}" class="border-t border-gray-200 hover:bg-gray-50">
+            <tr th:each="d : ${devices}" class="border-t border-gray-200 hover:bg-gray-50">
                 <td class="px-4 py-3" th:text="${d.type}">Light</td>
                 <td class="px-4 py-3" th:text="${d.index}">1</td>
                 <td class="px-4 py-3 font-mono text-xs align-top" th:text="${d.objectId}" th:title="${d.objectId}">ev_status_1</td>
                 <td class="px-4 py-3 font-mono text-xs max-w-[12rem] truncate align-top" th:text="${d.uniqueId}" th:title="${d.uniqueId}">id</td>
                 <td class="px-4 py-3">
-                    <span th:if="${d.used == null}" class="text-amber-700">기본(레거시·노출)</span>
-                    <span th:if="${d.used == true}" class="text-green-700 font-medium">활성</span>
+                    <span th:if="${d.used != false}" class="text-green-700 font-medium">활성</span>
                     <span th:if="${d.used == false}" class="text-gray-500">비활성</span>
                 </td>
-                <td class="device-save-cell px-4 py-3 sticky right-0 z-10 border-l border-slate-300 shadow-md align-top">
-                    <form th:action="@{/devices/used}" method="post" data-device-mqtt-form class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
-                        <input type="hidden" name="uniqueId" th:value="${d.uniqueId}"/>
-                        <input type="hidden" name="used" th:value="${filterUsed}"/>
-                        <label class="sr-only" th:for="|mqtt-row-${row.index}|">MQTT 노출</label>
-                        <select th:id="|mqtt-row-${row.index}|" name="mqttState"
-                                class="device-save-select w-full sm:w-auto">
-                            <option value="on" th:selected="${d.used == true}">활성 (MQTT/HA)</option>
-                            <option value="off" th:selected="${d.used == false}">비활성</option>
-                            <option value="legacy" th:selected="${d.used == null}">기본·레거시 (null)</option>
-                        </select>
-                        <button type="submit" class="device-save-btn shrink-0 whitespace-nowrap">
-                            저장
+                <td class="device-action-cell px-4 py-3 sticky right-0 z-10 border-l border-slate-300 shadow-md align-top">
+                    <div class="flex flex-wrap items-center gap-2" data-device-mqtt-toggle th:attr="data-unique-id=${d.uniqueId}">
+                        <button type="button"
+                                class="device-toggle-btn device-toggle-btn--active"
+                                data-mode="on"
+                                th:disabled="${d.used != false}">
+                            활성
                         </button>
-                    </form>
+                        <button type="button"
+                                class="device-toggle-btn device-toggle-btn--inactive"
+                                data-mode="off"
+                                th:disabled="${d.used == false}">
+                            비활성
+                        </button>
+                    </div>
                 </td>
             </tr>
             </tbody>
@@ -128,29 +142,34 @@
         banner.textContent = text;
     }
 
-    document.querySelectorAll('[data-device-mqtt-form]').forEach(function (form) {
-        form.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const uniqueId = form.querySelector('input[name=uniqueId]').value;
-            const mode = form.querySelector('select[name=mqttState]').value;
-            try {
-                const res = await fetch(MQTT_MODE_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ uniqueId: uniqueId, mode: mode })
-                });
-                const data = await res.json().catch(function () { return {}; });
-                if (res.ok && data.ok) {
-                    var sel = document.getElementById('deviceUsedFilter');
-                    var v = sel ? (sel.value || 'all') : 'all';
-                    var qs = v === 'all' ? '' : ('?used=' + encodeURIComponent(v));
-                    window.location.href = /*[[@{/devices}]]*/ '/devices' + qs;
-                } else {
-                    showBanner(false, data.error || ('HTTP ' + res.status));
+    document.querySelectorAll('[data-device-mqtt-toggle]').forEach(function (group) {
+        group.querySelectorAll('button[data-mode]').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                if (btn.disabled) return;
+                const uniqueId = group.getAttribute('data-unique-id');
+                const mode = btn.getAttribute('data-mode');
+                group.querySelectorAll('button[data-mode]').forEach(function (b) { b.disabled = true; });
+                try {
+                    const res = await fetch(MQTT_MODE_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ uniqueId: uniqueId, mode: mode })
+                    });
+                    const data = await res.json().catch(function () { return {}; });
+                    if (res.ok && data.ok) {
+                        var sel = document.getElementById('deviceUsedFilter');
+                        var v = sel ? (sel.value || 'all') : 'all';
+                        var qs = v === 'all' ? '' : ('?used=' + encodeURIComponent(v));
+                        window.location.href = /*[[@{/devices}]]*/ '/devices' + qs;
+                    } else {
+                        group.querySelectorAll('button[data-mode]').forEach(function (b) { b.disabled = false; });
+                        showBanner(false, data.error || ('HTTP ' + res.status));
+                    }
+                } catch (err) {
+                    group.querySelectorAll('button[data-mode]').forEach(function (b) { b.disabled = false; });
+                    showBanner(false, '요청 실패: ' + (err && err.message ? err.message : String(err)));
                 }
-            } catch (err) {
-                showBanner(false, '요청 실패: ' + (err && err.message ? err.message : String(err)));
-            }
+            });
         });
     });
 })();

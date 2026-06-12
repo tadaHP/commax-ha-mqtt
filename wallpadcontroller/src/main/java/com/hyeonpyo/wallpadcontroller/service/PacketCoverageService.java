@@ -5,9 +5,6 @@ import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingField;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingFieldValue;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.LogStatus;
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLogRepository;
 import com.hyeonpyo.wallpadcontroller.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,26 +16,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PacketCoverageService {
 
-    private final PacketLogRepository packetLogRepository;
     private final DeviceTypeRepository deviceTypeRepository;
+    private final SeenPacketMemoryStore seenPacketMemoryStore;
 
-    public List<PacketCoverageDevice> getCoverageStatus() throws Exception {
-        List<DeviceType> allDevices = deviceTypeRepository.findAllWithFullStructure();
-        List<PacketLog> successLogs = packetLogRepository.findByStatus(LogStatus.SUCCESS);
-
-        Map<String, Set<String>> receivedData = new HashMap<>();
-        for (PacketLog log : successLogs) {
-            String[] hexValues = log.getRawData().split(" ");
-            if (hexValues.length < 2) continue;
-            String header = hexValues[0];
-            for (int i = 1; i < hexValues.length; i++) {
-                String key = header + "-" + (i + 1);
-                receivedData.computeIfAbsent(key, k -> new HashSet<>()).add(hexValues[i]);
-            }
-        }
+    public List<PacketCoverageDevice> getCoverageStatus() {
+        Map<String, Set<String>> receivedData = seenPacketMemoryStore.buildReceivedData();
 
         List<PacketCoverageDevice> devices = new ArrayList<>();
-        for (DeviceType deviceType : allDevices) {
+        for (DeviceType deviceType : deviceTypeRepository.findAllWithFullStructure()) {
             Map<String, PacketCoverageKind> kindsMap = new LinkedHashMap<>();
             for (PacketType packetType : deviceType.getPacketTypes()) {
                 String header = packetType.getHeader();

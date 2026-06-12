@@ -35,9 +35,8 @@ public class DeviceAdminController {
         String normalized = normalizeUsedFilter(usedFilter);
         List<DeviceEntity> devices =
                 switch (normalized) {
-                    case "active" -> deviceEntityRepository.findAllByUsedTrue(sort);
+                    case "active" -> deviceEntityRepository.findAllByUsedIsNullOrUsedTrue(sort);
                     case "inactive" -> deviceEntityRepository.findAllByUsedFalse(sort);
-                    case "null" -> deviceEntityRepository.findAllByUsedIsNull(sort);
                     default -> deviceEntityRepository.findAll(sort);
                 };
         model.addAttribute("devices", devices);
@@ -45,15 +44,14 @@ public class DeviceAdminController {
         return "devices";
     }
 
-    /** 쿼리 파라미터 {@code used}: {@code all} | {@code active} | {@code inactive} | {@code null} */
+    /** 쿼리 파라미터 {@code used}: {@code all} | {@code active} | {@code inactive} */
     private static String normalizeUsedFilter(String raw) {
         if (raw == null || raw.isBlank()) {
             return "all";
         }
         return switch (raw.trim().toLowerCase()) {
-            case "active", "on", "true" -> "active";
+            case "active", "on", "true", "null", "legacy" -> "active";
             case "inactive", "off", "false" -> "inactive";
-            case "null", "legacy" -> "null";
             default -> "all";
         };
     }

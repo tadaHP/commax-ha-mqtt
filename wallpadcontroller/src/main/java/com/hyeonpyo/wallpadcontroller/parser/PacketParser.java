@@ -19,9 +19,7 @@ import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingField;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingFieldValue;
 import com.hyeonpyo.wallpadcontroller.domain.definition.repository.DeviceTypeRepository;
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.LogStatus;
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
-import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLogRepository;
+import com.hyeonpyo.wallpadcontroller.dto.CapturedPacketEvent;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.DeviceState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ElevatorState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.FanState;
@@ -32,10 +30,13 @@ import com.hyeonpyo.wallpadcontroller.parser.commax.device.detail.ThermoState;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.PacketKind;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.ParsedPacket;
 import com.hyeonpyo.wallpadcontroller.service.PacketCaptureService;
+import com.hyeonpyo.wallpadcontroller.service.SeenPacketMemoryStore;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Component
@@ -44,8 +45,8 @@ import lombok.extern.slf4j.Slf4j;
 public class PacketParser {
 
     private final DeviceTypeRepository deviceTypeRepository;
-    private final PacketLogRepository packetLogRepository;
     private final PacketCaptureService packetCaptureService;
+    private final SeenPacketMemoryStore seenPacketMemoryStore;
 
     private final Map<Long, Map<String, String>> packetFieldValueMap = new HashMap<>();
     private final Map<Long, Map<String, String>> hexToRawKeyMap = new HashMap<>();
@@ -132,13 +133,11 @@ public class PacketParser {
 
         if (packet == null) {
             String notes = generateNotesForUnknownPacket(bytes);
-            PacketLog log = PacketLog.builder()
-                    .rawData(rawHex)
-                    .status(LogStatus.UNKNOWN_HEADER)
-                    .notes(notes)
-                    .build();
-            packetLogRepository.save(log);
-            packetCaptureService.sendPacket(log);
+            packetCaptureService.sendPacket(new CapturedPacketEvent(
+                    rawHex,
+                    "UNKNOWN_HEADER",
+                    notes,
+                    LocalDateTime.now()));
             return Optional.empty();
         }
 
@@ -158,13 +157,17 @@ public class PacketParser {
 
         String notes = String.format("Device: %s, Index: %d, Kind: %s, State: %s",
                 deviceName, deviceIndex, packet.getKind(), (state != null ? state.toMap().toString() : "{}"));
-        PacketLog log = PacketLog.builder()
-                .rawData(rawHex)
-                .status(LogStatus.SUCCESS)
-                .notes(notes)
-                .build();
-        packetLogRepository.save(log);
-        packetCaptureService.sendPacket(log);
+        LocalDateTime receivedAt = LocalDateTime.now();
+        packetCaptureService.sendPacket(new CapturedPacketEvent(
+                rawHex,
+                "SUCCESS",
+                notes,
+                receivedAt));
+        try {
+            seenPacketMemoryStore.recordSuccessPacket(rawHex, receivedAt);
+        } catch (RuntimeException e) {
+            log.warn("seen_packet 기록 실패(패킷 처리는 계속): rawHex={}, msg={}", rawHex, e.getMessage());
+        }
 
         return Optional.of(new ParsedPacket(deviceName, deviceIndex, PacketKind.fromKey(packet.getKind()), state));
     }

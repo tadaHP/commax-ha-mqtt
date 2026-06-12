@@ -23,9 +23,11 @@ flowchart TD
 
 | 경로 | 설명 |
 |------|------|
-| `GET /` | 패킷 커버리지 대시보드 (`coverage.html`) |
-| `GET /packet-logs` | 수신 패킷 로그 페이지 |
-| `GET /packet-capture` | 패킷 캡처 UI |
+| `GET /` | 패킷 커버리지 대시보드 (`coverage.html`, 클라이언트 렌더) |
+| `GET /api/coverage` | 커버리지 JSON (seen_packet 메모리 기반) |
+| `GET /seen-packets` | 관측된 유니크 패킷 목록 (`seen-packets.html`) |
+| `GET /api/seen-packets` | 관측 패킷 JSON (메모리 페이징) |
+| `GET /packet-capture` | 실시간 패킷 캡처 UI (DB 저장 없음, SSE) |
 | `GET /packet-verify` | 입력 HEX 패턴 일치 시 마지막 수신 시각 모니터 (SSE) |
 | `POST /capture/start` | 캡처 시작 |
 | `POST /capture/stop` | 캡처 중지 |

@@ -261,7 +261,7 @@ INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUE
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (87, 129, 'fixed', '00', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (88, 130, 'fixed', '08', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (89, 131, 'fixed', '15', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'id', 'FF', '호기 바이트; 매핑 없으면 hex 그대로');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'id', 'FF', '호기 바이트. 매핑 없으면 hex 그대로');
 
 -- command_mapping_rule
 -- Light
