@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacket;
+import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacketDirection;
 import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacketRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +56,7 @@ class SeenPacketMemoryStoreTest {
         ArgumentCaptor<SeenPacket> captor = ArgumentCaptor.forClass(SeenPacket.class);
         verify(seenPacketRepository).save(captor.capture());
         assertThat(captor.getValue().getRawData()).isEqualTo("31 03 00 00 00 00 00 34");
+        assertThat(captor.getValue().getDirection()).isEqualTo(SeenPacketDirection.INBOUND);
     }
 
     @Test
@@ -65,5 +67,19 @@ class SeenPacketMemoryStoreTest {
         var received = store.buildReceivedData();
 
         assertThat(received.get("31-2")).contains("03");
+    }
+
+    @Test
+    void outboundPacketWithSameRawData_isTrackedSeparately() {
+        LocalDateTime seenAt = LocalDateTime.of(2026, 6, 12, 10, 0);
+
+        boolean inbound = store.recordSuccessPacket("31 03 00 00 00 00 00 34", seenAt);
+        boolean outbound = store.recordOutboundPacket("31 03 00 00 00 00 00 34", seenAt.plusSeconds(1));
+
+        assertThat(inbound).isTrue();
+        assertThat(outbound).isTrue();
+        assertThat(store.count()).isEqualTo(2);
+        assertThat(store.list(null, SeenPacketDirection.INBOUND, 0, 20).totalElements()).isEqualTo(1);
+        assertThat(store.list(null, SeenPacketDirection.OUTBOUND, 0, 20).totalElements()).isEqualTo(1);
     }
 }

@@ -1,6 +1,7 @@
 package com.hyeonpyo.wallpadcontroller.elfin;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -14,6 +15,7 @@ import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntity;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntityRepository;
 import com.hyeonpyo.wallpadcontroller.ew11.Ew11Transport;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
+import com.hyeonpyo.wallpadcontroller.service.SeenPacketMemoryStore;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class ElfinCommandService {
     private final DeviceStateManager deviceStateManager;
     private final DeviceEntityRepository deviceEntityRepository;
     private final MqttProperties mqttProperties;
+    private final SeenPacketMemoryStore seenPacketMemoryStore;
 
     public void sendCommand(String topic, MqttMessage message) {
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
@@ -70,6 +73,11 @@ public class ElfinCommandService {
                         .collect(Collectors.joining(" "));
                 log.info("📦 생성된 HEX 패킷: {}", collect);
                 ew11Transport.send(packet);
+                try {
+                    seenPacketMemoryStore.recordOutboundPacket(collect, LocalDateTime.now());
+                } catch (RuntimeException e) {
+                    log.warn("seen_packet 송신 기록 실패(명령 처리는 계속): rawHex={}, msg={}", collect, e.getMessage());
+                }
                 deviceStateManager.setTargetState(deviceType, deviceIndex, field, payload);
             }, () -> {
                 log.warn("⚠️ 패킷 생성 실패 - deviceType: {}, index: {}, field: {}, payload: {}", deviceType, deviceIndex, field, payload);

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacket;
+import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacketDirection;
 import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacketRepository;
 
 import jakarta.annotation.PostConstruct;
@@ -28,15 +29,16 @@ public class SeenPacketMemoryStore {
     private final SeenPacketRepository seenPacketRepository;
     private final TransactionTemplate transactionTemplate;
 
-    private final ConcurrentHashMap<String, SeenPacketEntry> byRawData = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<PacketKey, SeenPacketEntry> byPacket = new ConcurrentHashMap<>();
 
     @PostConstruct
     void loadFromDatabase() {
         List<SeenPacket> rows = seenPacketRepository.findAllByOrderByLastSeenAtDesc();
         for (SeenPacket row : rows) {
-            byRawData.put(row.getRawData(), toEntry(row));
+            SeenPacketEntry entry = toEntry(row);
+            byPacket.put(PacketKey.of(entry.getRawData(), entry.getDirection()), entry);
         }
-        log.info("seen_packet 메모리 로드 완료: {}건", byRawData.size());
+        log.info("seen_packet 메모리 로드 완료: {}건", byPacket.size());
     }
 
     /**
@@ -45,12 +47,22 @@ public class SeenPacketMemoryStore {
      * @return true면 이번에 처음 본 패킷
      */
     public boolean recordSuccessPacket(String rawHex, LocalDateTime seenAt) {
+        return recordPacket(rawHex, SeenPacketDirection.INBOUND, seenAt);
+    }
+
+    public boolean recordOutboundPacket(String rawHex, LocalDateTime seenAt) {
+        return recordPacket(rawHex, SeenPacketDirection.OUTBOUND, seenAt);
+    }
+
+    public boolean recordPacket(String rawHex, SeenPacketDirection direction, LocalDateTime seenAt) {
         String normalized = normalizeRawHex(rawHex);
-        if (normalized == null) {
+        SeenPacketDirection packetDirection = direction == null ? SeenPacketDirection.INBOUND : direction;
+        if (normalized == null || seenAt == null) {
             return false;
         }
+        PacketKey key = PacketKey.of(normalized, packetDirection);
 
-        SeenPacketEntry existing = byRawData.get(normalized);
+        SeenPacketEntry existing = byPacket.get(key);
         if (existing != null) {
             existing.touchLastSeenAt(seenAt);
             return false;
@@ -59,11 +71,12 @@ public class SeenPacketMemoryStore {
         SeenPacketEntry created = new SeenPacketEntry(
                 normalized,
                 extractHeader(normalized),
+                packetDirection,
                 seenAt,
                 seenAt);
 
-        synchronized (lockFor(normalized)) {
-            SeenPacketEntry existingAfterLock = byRawData.get(normalized);
+        synchronized (lockFor(key)) {
+            SeenPacketEntry existingAfterLock = byPacket.get(key);
             if (existingAfterLock != null) {
                 existingAfterLock.touchLastSeenAt(seenAt);
                 return false;
@@ -71,33 +84,48 @@ public class SeenPacketMemoryStore {
             transactionTemplate.executeWithoutResult(status -> seenPacketRepository.save(SeenPacket.builder()
                     .rawData(created.getRawData())
                     .header(created.getHeader())
+                    .direction(created.getDirection())
                     .firstSeenAt(created.getFirstSeenAt())
                     .lastSeenAt(created.getLastSeenAt())
                     .build()));
-            byRawData.put(normalized, created);
+            byPacket.put(key, created);
             return true;
         }
     }
 
-    private Object lockFor(String rawData) {
-        return internLocks.computeIfAbsent(rawData, key -> new Object());
+    private Object lockFor(PacketKey packetKey) {
+        return internLocks.computeIfAbsent(packetKey, key -> new Object());
     }
 
-    private final ConcurrentHashMap<String, Object> internLocks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<PacketKey, Object> internLocks = new ConcurrentHashMap<>();
 
     public Map<String, Set<String>> buildReceivedData() {
         Map<String, Set<String>> receivedData = new HashMap<>();
-        for (SeenPacketEntry entry : byRawData.values()) {
+        for (SeenPacketEntry entry : byPacket.values()) {
+            if (entry.getDirection() != SeenPacketDirection.INBOUND) {
+                continue;
+            }
             accumulateRawHex(receivedData, entry.getRawData());
         }
         return receivedData;
     }
 
     public SeenPacketPage list(String headerFilter, int page, int size) {
+        return list(headerFilter, null, page, size);
+    }
+
+    public List<SeenPacketEntry> snapshot() {
+        return byPacket.values().stream()
+                .sorted(Comparator.comparing(SeenPacketEntry::getLastSeenAt).reversed())
+                .toList();
+    }
+
+    public SeenPacketPage list(String headerFilter, SeenPacketDirection directionFilter, int page, int size) {
         String header = normalizeHeaderFilter(headerFilter);
 
-        List<SeenPacketEntry> filtered = byRawData.values().stream()
+        List<SeenPacketEntry> filtered = byPacket.values().stream()
                 .filter(entry -> header == null || header.equals(entry.getHeader()))
+                .filter(entry -> directionFilter == null || directionFilter == entry.getDirection())
                 .sorted(Comparator.comparing(SeenPacketEntry::getLastSeenAt).reversed())
                 .toList();
 
@@ -111,7 +139,7 @@ public class SeenPacketMemoryStore {
     }
 
     public int count() {
-        return byRawData.size();
+        return byPacket.size();
     }
 
     static String normalizeRawHex(String rawHex) {
@@ -156,6 +184,7 @@ public class SeenPacketMemoryStore {
         return new SeenPacketEntry(
                 row.getRawData(),
                 row.getHeader(),
+                row.getDirection() == null ? SeenPacketDirection.INBOUND : row.getDirection(),
                 row.getFirstSeenAt(),
                 row.getLastSeenAt());
     }
@@ -166,5 +195,11 @@ public class SeenPacketMemoryStore {
             int size,
             long totalElements,
             int totalPages) {
+    }
+
+    private record PacketKey(String rawData, SeenPacketDirection direction) {
+        private static PacketKey of(String rawData, SeenPacketDirection direction) {
+            return new PacketKey(rawData, direction == null ? SeenPacketDirection.INBOUND : direction);
+        }
     }
 }

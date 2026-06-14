@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hyeonpyo.wallpadcontroller.domain.coverage.SeenPacketDirection;
 import com.hyeonpyo.wallpadcontroller.service.SeenPacketEntry;
 import com.hyeonpyo.wallpadcontroller.service.SeenPacketMemoryStore;
 import com.hyeonpyo.wallpadcontroller.service.SeenPacketMemoryStore.SeenPacketPage;
@@ -30,11 +31,13 @@ public class SeenPacketRestController {
     public ResponseEntity<Map<String, Object>> list(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String header) {
+            @RequestParam(required = false) String header,
+            @RequestParam(required = false) String direction) {
         int sz = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
         int pg = Math.max(page, 0);
+        SeenPacketDirection dir = parseDirection(direction);
 
-        SeenPacketPage result = seenPacketMemoryStore.list(header, pg, sz);
+        SeenPacketPage result = seenPacketMemoryStore.list(header, dir, pg, sz);
         List<Map<String, Object>> rows = result.content().stream()
                 .map(this::toRow)
                 .collect(Collectors.toList());
@@ -54,8 +57,16 @@ public class SeenPacketRestController {
         Map<String, Object> row = new LinkedHashMap<>();
         row.put("rawData", entry.getRawData());
         row.put("header", entry.getHeader());
+        row.put("direction", entry.getDirection());
         row.put("firstSeenAt", entry.getFirstSeenAt());
         row.put("lastSeenAt", entry.getLastSeenAt());
         return row;
+    }
+
+    private SeenPacketDirection parseDirection(String direction) {
+        if (direction == null || direction.isBlank()) {
+            return null;
+        }
+        return SeenPacketDirection.valueOf(direction.trim().toUpperCase());
     }
 }

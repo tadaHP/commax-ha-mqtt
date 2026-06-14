@@ -1,5 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,7 @@ public class PacketTestSendService {
     private static final Pattern BYTE_HEX = Pattern.compile("(?i)[0-9A-F]{2}");
 
     private final Ew11Transport ew11Transport;
+    private final SeenPacketMemoryStore seenPacketMemoryStore;
 
     /**
      * 8바이트 HEX 문자열을 파싱해 EW11(MQTT/UDP)로 그대로 전송합니다.
@@ -38,7 +40,13 @@ public class PacketTestSendService {
             out[i] = (byte) Integer.parseInt(t, 16);
         }
         ew11Transport.send(out);
-        log.info("패킷 테스트 송신: {}", formatHex(out));
+        String rawHex = formatHex(out);
+        try {
+            seenPacketMemoryStore.recordOutboundPacket(rawHex, LocalDateTime.now());
+        } catch (RuntimeException e) {
+            log.warn("seen_packet 테스트 송신 기록 실패(전송 처리는 계속): rawHex={}, msg={}", rawHex, e.getMessage());
+        }
+        log.info("패킷 테스트 송신: {}", rawHex);
         return out;
     }
 

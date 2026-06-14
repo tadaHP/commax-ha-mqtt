@@ -47,9 +47,9 @@
 
 ## seen_packet (관측된 유니크 패킷)
 
-SUCCESS 패킷의 **raw hex 전체**를 유니크하게 `seen_packet` 테이블과 메모리(`SeenPacketMemoryStore`)에 보관합니다. 이미 본 패킷은 DB insert 없이 메모리 `lastSeenAt`만 갱신합니다. **자동 삭제·rotation은 없습니다.**
+SUCCESS 수신 패킷과 앱에서 EW11로 송신한 패킷의 **raw hex 전체**를 방향별(`INBOUND`/`OUTBOUND`)로 유니크하게 `seen_packet` 테이블과 메모리(`SeenPacketMemoryStore`)에 보관합니다. 이미 본 패킷은 DB insert 없이 메모리 `lastSeenAt`만 갱신합니다. 기존 데이터는 마이그레이션 시 `INBOUND`로 간주합니다. **자동 삭제·rotation은 없습니다.**
 
-- 커버리지(`/`, `/api/coverage`): 메모리의 seen 패킷을 파싱해 필드별 수신 현황 집계
+- 커버리지(`/`, `/api/coverage`): 메모리의 `INBOUND` seen 패킷을 파싱해 필드별 수신 현황 집계
 - 관측 패킷 페이지: `GET /seen-packets`, `GET /api/seen-packets`
 - 실시간 캡처(`/packet-capture`): SSE로만 표시, DB에 저장하지 않음
 
