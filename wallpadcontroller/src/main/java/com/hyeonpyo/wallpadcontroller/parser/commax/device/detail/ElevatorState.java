@@ -23,8 +23,9 @@ public class ElevatorState implements DeviceState {
         if (car != null && !car.isBlank()) {
             map.put("car", car);
         }
-        if (floor != null && !floor.isBlank()) {
-            map.put("floor", floor);
+        String floorDecimal = floorAsDecimal();
+        if (floorDecimal != null && !floorDecimal.isBlank()) {
+            map.put("floor", floorDecimal);
         }
         return map;
     }
@@ -32,7 +33,23 @@ public class ElevatorState implements DeviceState {
     @Override
     public String toJson() {
         String c = car == null ? "" : car;
-        String f = floor == null ? "" : floor;
+        String f = floorAsDecimal();
+        f = f == null ? "" : f;
         return String.format("{\"car\":\"%s\", \"floor\":\"%s\"}", c, f);
+    }
+
+    /** 패킷 바이트(HEX)를 십진 층수 문자열로 변환합니다. */
+    private String floorAsDecimal() {
+        if (floor == null || floor.isBlank()) {
+            return floor;
+        }
+        if (floor.matches("\\d+")) {
+            return floor;
+        }
+        try {
+            return String.valueOf(Integer.parseInt(floor, 16));
+        } catch (NumberFormatException e) {
+            return floor;
+        }
     }
 }

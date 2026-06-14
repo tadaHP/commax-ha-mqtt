@@ -120,7 +120,7 @@ class PacketCoverageServiceTest {
         return DeviceType.builder()
                 .name("Light")
                 .type("light")
-                .packetTypes(List.of(command, stateRequest, state))
+                .packetTypes(new LinkedHashSet<>(Set.of(command, stateRequest, state)))
                 .build();
     }
 
