@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Service;
 
 import com.hyeonpyo.wallpadcontroller.ew11.Ew11Transport;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.LogStatus;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketDirection;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLog;
+import com.hyeonpyo.wallpadcontroller.domain.packethistory.PacketLogRepository;
 
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class CommandQueue {
     private final Ew11Transport ew11Transport;
     private final CommandAckProfiles ackProfiles;
+    private final PacketLogRepository packetLogRepository;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, PendingCommand> pending = new ConcurrentHashMap<>();
 
@@ -65,6 +70,13 @@ public class CommandQueue {
         if (command.cancelled || pending.get(command.key) != command) return;
         command.attempts++;
         ew11Transport.send(command.packet);
+        packetLogRepository.save(PacketLog.builder()
+                .rawData(toHex(command.packet))
+                .direction(PacketDirection.TX)
+                .commandId(command.id)
+                .status(LogStatus.SUCCESS)
+                .notes("command=" + command.key + ", attempt=" + command.attempts)
+                .build());
         log.info("📤 명령 전송 [{}] {} ({}/{})", command.id, command.key,
                 command.attempts, command.policy.maxRetries() + 1);
         executor.schedule(() -> onTimeout(command), command.policy.ackTimeoutMs(), TimeUnit.MILLISECONDS);
@@ -75,6 +87,7 @@ public class CommandQueue {
         if (command.attempts > command.policy.maxRetries()) {
             pending.remove(command.key, command);
             log.warn("❌ 명령 확인 실패 [{}] {}: {}회 전송", command.id, command.key, command.attempts);
+            recordResult(command, "TIMEOUT");
             return;
         }
         executor.schedule(() -> dispatch(command), command.policy.retryDelayMs(), TimeUnit.MILLISECONDS);
@@ -84,11 +97,28 @@ public class CommandQueue {
         if (pending.remove(command.key, command)) {
             command.cancelled = true;
             log.info("✅ 명령 {} [{}] {}", result, command.id, command.key);
+            recordResult(command, result);
         }
     }
 
     private String key(String deviceType, int deviceIndex, String field) {
         return deviceType + deviceIndex + "/" + field;
+    }
+
+    private void recordResult(PendingCommand command, String result) {
+        packetLogRepository.save(PacketLog.builder()
+                .rawData("")
+                .direction(PacketDirection.TX)
+                .commandId(command.id)
+                .status(LogStatus.SUCCESS)
+                .notes("command=" + command.key + ", result=" + result)
+                .build());
+    }
+
+    private String toHex(byte[] packet) {
+        StringBuilder result = new StringBuilder();
+        for (byte value : packet) result.append(String.format("%02X ", value));
+        return result.toString().trim();
     }
 
     @PreDestroy
