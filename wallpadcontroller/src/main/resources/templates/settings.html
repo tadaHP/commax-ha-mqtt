@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Commax 설정</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+  <main class="container mx-auto max-w-4xl p-8">
+    <h1 class="mb-2 text-3xl font-bold text-gray-800">장치 설정</h1>
+    <p class="mb-6 text-gray-600">수신으로 발견된 장치를 활성화해야 Home Assistant에 등록되고 제어됩니다.</p>
+    <div class="overflow-hidden rounded-lg bg-white shadow">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-gray-100 text-xs uppercase text-gray-600">
+          <tr><th class="px-5 py-3">장치</th><th class="px-5 py-3">번호</th><th class="px-5 py-3">고유 ID</th><th class="px-5 py-3">Home Assistant 활성화</th></tr>
+        </thead>
+        <tbody id="devices"><tr><td class="px-5 py-4" colspan="4">장치를 불러오는 중입니다.</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+  <script>
+    const tbody = document.getElementById('devices');
+    async function setEnabled(id, enabled) {
+      const response = await fetch(`/api/devices/${encodeURIComponent(id)}/enabled`, {
+        method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({enabled})
+      });
+      if (!response.ok) { alert('장치 설정을 저장하지 못했습니다.'); }
+      await loadDevices();
+    }
+    async function loadDevices() {
+      const response = await fetch('/api/devices');
+      if (!response.ok) { tbody.innerHTML = '<tr><td class="px-5 py-4" colspan="4">장치 목록을 불러오지 못했습니다.</td></tr>'; return; }
+      const devices = await response.json();
+      tbody.innerHTML = devices.length ? '' : '<tr><td class="px-5 py-4" colspan="4">아직 발견된 장치가 없습니다.</td></tr>';
+      devices.forEach(device => {
+        const row = document.createElement('tr'); row.className = 'border-t border-gray-100';
+        row.innerHTML = `<td class="px-5 py-4">${device.type}</td><td class="px-5 py-4">${device.index}</td><td class="px-5 py-4 font-mono">${device.uniqueId}</td>`;
+        const action = document.createElement('td'); action.className = 'px-5 py-4';
+        const button = document.createElement('button');
+        button.className = device.enabled ? 'rounded bg-red-600 px-3 py-1 text-white' : 'rounded bg-green-600 px-3 py-1 text-white';
+        button.textContent = device.enabled ? '비활성화' : '활성화';
+        button.onclick = () => setEnabled(device.uniqueId, !device.enabled); action.appendChild(button); row.appendChild(action); tbody.appendChild(row);
+      });
+    }
+    loadDevices();
+  </script>
+</body>
+</html>
