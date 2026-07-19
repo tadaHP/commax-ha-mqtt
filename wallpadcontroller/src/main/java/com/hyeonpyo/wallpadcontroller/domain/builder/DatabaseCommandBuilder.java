@@ -90,6 +90,12 @@ public class DatabaseCommandBuilder implements CommandBuilder {
                 if (fieldName.equals("value")) {
                     int intValue = (int) Double.parseDouble(payload);
                     return Integer.toString(intValue); // payload 그대로 넣을땐 10진수로 변환
+                } else if (fieldName.equals("cutoffValue")) {
+                    int value = Integer.parseInt(payload);
+                    if (value < 0 || value > 99) {
+                        throw new IllegalArgumentException("Outlet cutoff value must be between 0 and 99");
+                    }
+                    return String.format("%02X", ((value / 10) << 4) | (value % 10));
                 } else {
                     return payload;
                 }

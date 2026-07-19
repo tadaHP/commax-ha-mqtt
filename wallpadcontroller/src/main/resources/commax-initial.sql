@@ -289,6 +289,13 @@ INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_p
 -- Gas ON
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (13, 4, 'button', 'PRESS', 'gas_button_press');
 
+-- Outlet
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (16, 5, 'power', 'ON', 'outlet_power_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (17, 5, 'power', 'OFF', 'outlet_power_off');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (18, 5, 'ecomode', 'ON', 'outlet_ecomode_on');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (19, 5, 'ecomode', 'OFF', 'outlet_ecomode_off');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (20, 5, 'setCutoff', NULL, 'outlet_set_cutoff');
+
 -- command_mapping_detail
 -- Light (ON)
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (1, 'power', 'ON', false);
@@ -338,3 +345,15 @@ INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_
 
 -- Gas (ON)
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (13, 'power', 'ON', false);
+
+-- Outlet
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (16, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (16, 'power', 'on', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (17, 'commandType', 'power', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (17, 'power', 'off', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (18, 'commandType', 'ecomode', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (18, 'power', 'on', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (19, 'commandType', 'ecomode', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (19, 'power', 'off', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (20, 'commandType', 'setCutoff', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (20, 'cutoffValue', NULL, true);

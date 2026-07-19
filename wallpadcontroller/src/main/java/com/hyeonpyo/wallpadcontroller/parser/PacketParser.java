@@ -209,7 +209,7 @@ public class PacketParser {
             case "LightBreaker":
                 return new LightState(fields.get("power"));
             case "Outlet":
-                return new OutletState(fields.get("power"), fields.get("watt"), fields.get("ecomode"), fields.get("cutoff"));
+                return OutletState.fromPacketFields(fields);
             case "Gas":
                 return new GasState(fields.get("power"));
             case "EV":
