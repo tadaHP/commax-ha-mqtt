@@ -26,7 +26,7 @@ INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (15, 5, 'state
 INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (16, 6, 'command', '78');
 INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (17, 6, 'state_request', '76');
 INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (18, 6, 'state', 'F6');
-INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (19, 7, 'command', 'FF');
+INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (19, 7, 'command', 'A0');
 INSERT INTO packet_type (id, device_type_id, kind, header) VALUES (20, 7, 'state', '23');
 
 -- insert into packet_field
@@ -163,7 +163,7 @@ INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (130, 19, 
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (131, 19, 5, 'unknown3');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (132, 19, 6, 'empty');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (133, 19, 7, 'checksum');
-INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (134, 20, 1, 'deviceId');
+INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (134, 20, 1, 'power');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (135, 20, 2, 'floor');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (136, 20, 3, 'empty');
 INSERT INTO parsing_field (id, packet_type_id, position, name) VALUES (137, 20, 4, 'empty');
@@ -261,7 +261,9 @@ INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUE
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (87, 129, 'fixed', '00', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (88, 130, 'fixed', '08', '');
 INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (89, 131, 'fixed', '15', '');
-INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'id', 'FF', '호기 바이트. 매핑 없으면 hex 그대로');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (90, 134, 'ON', '01', 'power로 추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (91, 135, 'id', 'FF', '기기 번호로 추정됨..');
+INSERT INTO parsing_field_value (id, parsing_field_id, raw_key, hex, memo) VALUES (92, 136, 'floor', 'FF', '층으로 추정됨..');
 
 -- command_mapping_rule
 -- Light
@@ -295,6 +297,7 @@ INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_p
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (18, 5, 'ecomode', 'ON', 'outlet_ecomode_on');
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (19, 5, 'ecomode', 'OFF', 'outlet_ecomode_off');
 INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (20, 5, 'setCutoff', NULL, 'outlet_set_cutoff');
+INSERT INTO command_mapping_rule (id, device_type_id, external_field, external_payload, rule_name) VALUES (21, 7, 'button', 'PRESS', 'elevator_call');
 
 -- command_mapping_detail
 -- Light (ON)
@@ -357,3 +360,9 @@ INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (19, 'power', 'off', false);
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (20, 'commandType', 'setCutoff', false);
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (20, 'cutoffValue', NULL, true);
+
+-- Elevator: A0 01 01 00 08 15 00 + checksum (H2M Commax profile)
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'power', 'ON', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'unknown1', 'fixed', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'unknown2', 'fixed', false);
+INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'unknown3', 'fixed', false);

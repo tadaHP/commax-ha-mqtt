@@ -34,7 +34,7 @@ public class CommandQueue {
         PendingCommand command = new PendingCommand(
                 UUID.randomUUID().toString(), key, payload, packet,
                 ackProfiles.forCommand(deviceType, deviceIndex, field, payload).orElse(null),
-                CommandRetryPolicy.DEFAULT);
+                "EV".equals(deviceType) ? new CommandRetryPolicy(500, 0, 0) : CommandRetryPolicy.DEFAULT);
         PendingCommand previous = pending.put(key, command);
         if (previous != null) {
             previous.cancelled = true;

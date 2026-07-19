@@ -32,7 +32,9 @@ public class CommandAckProfiles {
                     new byte[] {EXACT, ANY, EXACT}));
             case "Gas" -> Optional.of(new MaskedAckMatcher(
                     new byte[] {(byte) 0x91}, new byte[] {EXACT}));
-            // Outlet and EV remain state-confirmed until their packet rules are completed.
+            case "EV" -> Optional.of(new MaskedAckMatcher(
+                    new byte[] {0x23}, new byte[] {EXACT}));
+            // Outlet remains state-confirmed until its ACK packet is measured.
             default -> Optional.empty();
         };
     }
