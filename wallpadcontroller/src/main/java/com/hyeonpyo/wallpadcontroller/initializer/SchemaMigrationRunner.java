@@ -30,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SchemaMigrationRunner implements CommandLineRunner {
     private static final int BASELINE_VERSION = 1;
+    /** SQL migrations already occupy versions 2 and 3; this records current logical schema V2. */
+    private static final int CURRENT_SCHEMA_VERSION = 4;
     private static final Pattern VERSIONED_FILE = Pattern.compile("V(\\d+)__.+\\.sql");
     private final DataSource dataSource;
 
@@ -38,14 +40,11 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
             statement.execute("CREATE TABLE IF NOT EXISTS app_setting (setting_key TEXT PRIMARY KEY, setting_value TEXT NOT NULL, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-            applyColumnIfMissing(statement, "registered_devices", "enabled", "BOOLEAN NOT NULL DEFAULT 0");
-            applyColumnIfMissing(statement, "packet_log", "direction", "VARCHAR(8)");
-            applyColumnIfMissing(statement, "packet_log", "command_id", "VARCHAR(36)");
-
             applyBaseline(connection);
             Resource[] resources = new PathMatchingResourcePatternResolver().getResources("classpath*:db/migration/V*__*.sql");
             Arrays.sort(resources, Comparator.comparingInt(this::migrationVersion));
             for (Resource resource : resources) applyMigration(connection, resource);
+            applyCurrentSchemaV2(connection);
             log.info("SQLite schema migrations completed");
         }
     }
@@ -131,6 +130,16 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         }
     }
 
+    private boolean hasTable(Connection connection, String table) throws Exception {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?")) {
+            statement.setString(1, table);
+            try (ResultSet tables = statement.executeQuery()) {
+                return tables.next();
+            }
+        }
+    }
+
     private boolean isApplied(Connection connection, int version) throws Exception {
         try (PreparedStatement statement = connection.prepareStatement("SELECT 1 FROM schema_version WHERE version = ?")) {
             statement.setInt(1, version);
@@ -147,6 +156,64 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         }
     }
 
+    /**
+     * Reconciles databases created by the short-lived {@code enabled}-based device UI
+     * with the current {@code used}-based model. SQLite cannot drop a column in place,
+     * so the table is rebuilt while retaining every registered device and its choice.
+     * packet_log is the only confirmed unused legacy table: there is no current
+     * entity, repository or reader for it, so it is explicitly removed.
+     */
+    private void applyCurrentSchemaV2(Connection connection) throws Exception {
+        if (isApplied(connection, CURRENT_SCHEMA_VERSION)) return;
+        boolean autoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
+        try {
+            rebuildRegisteredDevicesIfNeeded(connection);
+            dropLegacyTable(connection, "packet_log");
+            recordVersion(connection, CURRENT_SCHEMA_VERSION);
+            connection.commit();
+            log.info("Applied current schema V2 cleanup (migration record V{})", CURRENT_SCHEMA_VERSION);
+        } catch (Exception e) {
+            connection.rollback();
+            throw e;
+        } finally {
+            connection.setAutoCommit(autoCommit);
+        }
+    }
+
+    private void rebuildRegisteredDevicesIfNeeded(Connection connection) throws Exception {
+        if (!hasTable(connection, "registered_devices")) return;
+        boolean hasEnabled = hasColumn(connection, "registered_devices", "enabled");
+        boolean hasUsed = hasColumn(connection, "registered_devices", "used");
+        if (!hasEnabled && hasUsed) return;
+
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS registered_devices_v2");
+            statement.execute("CREATE TABLE registered_devices_v2 ("
+                    + "unique_id VARCHAR(255) NOT NULL PRIMARY KEY, "
+                    + "object_id VARCHAR(255) NOT NULL, "
+                    + "device_type VARCHAR(255) NOT NULL, "
+                    + "index_number INTEGER NOT NULL, "
+                    + "used BOOLEAN)");
+            String usedExpression = hasUsed && hasEnabled ? "COALESCE(used, enabled)"
+                    : hasUsed ? "used" : hasEnabled ? "enabled" : "NULL";
+            statement.executeUpdate("INSERT INTO registered_devices_v2 (unique_id, object_id, device_type, index_number, used) "
+                    + "SELECT unique_id, object_id, device_type, index_number, " + usedExpression
+                    + " FROM registered_devices");
+            statement.execute("DROP TABLE registered_devices");
+            statement.execute("ALTER TABLE registered_devices_v2 RENAME TO registered_devices");
+        }
+        log.info("Rebuilt registered_devices for used-based publication (removed legacy enabled column)");
+    }
+
+    private void dropLegacyTable(Connection connection, String table) throws Exception {
+        if (!hasTable(connection, table)) return;
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE " + table);
+        }
+        log.info("Dropped unused legacy table: {}", table);
+    }
+
     private boolean isDeviceTypeEmpty(Connection connection) throws Exception {
         try (Statement statement = connection.createStatement();
                 ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM device_type")) {
@@ -154,18 +221,4 @@ public class SchemaMigrationRunner implements CommandLineRunner {
         }
     }
 
-    private void applyColumnIfMissing(Statement statement, String table, String column, String definition) throws Exception {
-        if (!hasTable(statement, table)) return;
-        try (ResultSet columns = statement.executeQuery("PRAGMA table_info(" + table + ")")) {
-            while (columns.next()) if (column.equalsIgnoreCase(columns.getString("name"))) return;
-        }
-        statement.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + definition);
-    }
-
-    private boolean hasTable(Statement statement, String table) throws Exception {
-        try (ResultSet tables = statement.executeQuery(
-                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = '" + table + "'")) {
-            return tables.next();
-        }
-    }
 }
