@@ -1,4 +1,4 @@
 spring:
   datasource:
-    url: jdbc:sqlite:/app/mydb.db
+    url: ${SPRING_DATASOURCE_URL:jdbc:sqlite:/app/mydb.db}
     driver-class-name: org.sqlite.JDBC

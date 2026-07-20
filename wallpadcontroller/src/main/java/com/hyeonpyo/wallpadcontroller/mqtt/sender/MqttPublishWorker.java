@@ -6,11 +6,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Component;
 
 import com.hyeonpyo.wallpadcontroller.mqtt.sender.record.MqttPendingMessage;
+import com.hyeonpyo.wallpadcontroller.settings.RuntimeConnectionManager;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -22,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class MqttPublishWorker {
 
-    private final MqttClient mqttClient;
+    private final RuntimeConnectionManager connections;
     private final BlockingQueue<MqttPendingMessage> queue = new LinkedBlockingQueue<>();
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -48,12 +47,7 @@ public class MqttPublishWorker {
             MqttPendingMessage msg = queue.poll();
             if (msg == null) return; // 보낼 메시지가 없음
 
-            if (mqttClient.isConnected()) {
-                MqttMessage mqttMessage = new MqttMessage(msg.payload());
-                mqttMessage.setQos(msg.qos());
-                mqttMessage.setRetained(msg.retained());
-
-                mqttClient.publish(msg.topic(), mqttMessage);
+            if (connections.publish(msg.topic(), msg.payload(), msg.qos(), msg.retained())) {
                 log.debug("📤 MQTT 발행 완료: {}", msg.topic());
 
                 reconnectBackoffMillis = 100; // 정상 발행되면 백오프 초기화

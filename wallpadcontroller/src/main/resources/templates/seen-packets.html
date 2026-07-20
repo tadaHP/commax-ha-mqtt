@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('관측된 패킷')}"></head>
+<body id="seen-packets-page" class="bg-gray-100 font-sans"
+      th:data-api-seen-packets="@{/api/seen-packets}">
+<div th:replace="~{fragments/nav :: nav}"></div>
+<div class="container mx-auto p-8 max-w-7xl">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">관측된 패킷 (유니크)</h1>
+    <p class="text-gray-600 text-sm mb-6">
+        한 번이라도 수신 또는 송신된 raw hex를 방향별로 메모리·DB(<code class="bg-gray-200 px-1 rounded text-xs">seen_packet</code>)에 보관합니다.
+        중복 관측은 DB에 쌓지 않고 메모리의 <code class="bg-gray-200 px-1 rounded text-xs">lastSeenAt</code>만 갱신합니다.
+        자동 삭제·rotation은 없으며, 관측된 패킷은 계속 누적됩니다.
+    </p>
+
+    <form id="searchForm" class="flex flex-wrap gap-2 items-end mb-4">
+        <div class="w-28">
+            <label for="headerManual" class="block text-sm font-medium text-gray-700 mb-1">헤더 (2자리 hex)</label>
+            <input type="text" id="headerManual" maxlength="2" placeholder="31"
+                   class="w-full border border-gray-300 rounded-md px-3 py-2 font-mono text-sm uppercase"/>
+        </div>
+        <div>
+            <label for="directionSelect" class="block text-sm font-medium text-gray-700 mb-1">방향</label>
+            <select id="directionSelect" class="border border-gray-300 rounded-md px-2 py-2 text-sm">
+                <option value="" selected>전체</option>
+                <option value="INBOUND">수신</option>
+                <option value="OUTBOUND">송신</option>
+            </select>
+        </div>
+        <div>
+            <label for="sizeSelect" class="block text-sm font-medium text-gray-700 mb-1">페이지 크기</label>
+            <select id="sizeSelect" class="border border-gray-300 rounded-md px-2 py-2 text-sm">
+                <option value="20" selected>20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+        </div>
+        <button type="submit" id="searchBtn" class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700">검색</button>
+        <button type="button" id="resetBtn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md text-sm font-semibold hover:bg-gray-300">초기화</button>
+    </form>
+
+    <p id="summaryLine" class="text-sm text-gray-600 mb-2">불러오는 중…</p>
+    <p id="errorLine" class="hidden text-sm text-red-600 mb-2"></p>
+
+    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+        <table class="min-w-full text-sm text-left">
+            <thead class="bg-gray-50 text-gray-700 uppercase text-xs">
+            <tr>
+                <th class="px-5 py-3">방향</th>
+                <th class="px-5 py-3">헤더</th>
+                <th class="px-5 py-3">raw hex</th>
+                <th class="px-5 py-3">최초 관측</th>
+                <th class="px-5 py-3">최근 관측</th>
+            </tr>
+            </thead>
+            <tbody id="packetRows"></tbody>
+        </table>
+    </div>
+
+    <div id="pager" class="hidden mt-4 flex flex-wrap items-center gap-2 text-sm">
+        <button type="button" id="btnFirst" class="px-3 py-1 border rounded hover:bg-gray-100">처음</button>
+        <button type="button" id="btnPrev" class="px-3 py-1 border rounded hover:bg-gray-100">이전</button>
+        <span id="pageInfo" class="px-2"></span>
+        <button type="button" id="btnNext" class="px-3 py-1 border rounded hover:bg-gray-100">다음</button>
+        <button type="button" id="btnLast" class="px-3 py-1 border rounded hover:bg-gray-100">마지막</button>
+    </div>
+</div>
+<script th:inline="none">
+/*<![CDATA[*/
+(function () {
+    const root = document.getElementById('seen-packets-page');
+    const API_URL = root.getAttribute('data-api-seen-packets');
+    const headerManual = document.getElementById('headerManual');
+    const directionSelect = document.getElementById('directionSelect');
+    const sizeSelect = document.getElementById('sizeSelect');
+    const packetRows = document.getElementById('packetRows');
+    const summaryLine = document.getElementById('summaryLine');
+    const errorLine = document.getElementById('errorLine');
+    const pager = document.getElementById('pager');
+    const pageInfo = document.getElementById('pageInfo');
+    const btnFirst = document.getElementById('btnFirst');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnLast = document.getElementById('btnLast');
+    const searchForm = document.getElementById('searchForm');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let state = { page: 0, size: 20, header: '', direction: '' };
+    let lastTotalPages = 1;
+
+    function formatDateTime(v) {
+        if (v == null) return '';
+        if (typeof v === 'string') return v.replace('T', ' ').slice(0, 19);
+        return String(v);
+    }
+
+    function renderRows(content) {
+        if (!content || content.length === 0) {
+            packetRows.innerHTML = '<tr><td colspan="5" class="px-5 py-8 text-center text-gray-500">결과가 없습니다.</td></tr>';
+            return;
+        }
+        packetRows.innerHTML = content.map(function (row) {
+            const directionLabel = row.direction === 'OUTBOUND' ? '송신' : '수신';
+            const directionClass = row.direction === 'OUTBOUND' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700';
+            return '<tr class="border-b border-gray-200 hover:bg-gray-50">' +
+                '<td class="px-5 py-4"><span class="px-2 py-1 rounded text-xs font-semibold ' + directionClass + '">' + directionLabel + '</span></td>' +
+                '<td class="px-5 py-4 font-mono">' + (row.header || '') + '</td>' +
+                '<td class="px-5 py-4 font-mono text-xs break-all">' + (row.rawData || '') + '</td>' +
+                '<td class="px-5 py-4">' + formatDateTime(row.firstSeenAt) + '</td>' +
+                '<td class="px-5 py-4">' + formatDateTime(row.lastSeenAt) + '</td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    async function loadPage() {
+        errorLine.classList.add('hidden');
+        summaryLine.textContent = '불러오는 중…';
+        const params = new URLSearchParams();
+        params.set('page', String(state.page));
+        params.set('size', String(state.size));
+        if (state.header) params.set('header', state.header);
+        if (state.direction) params.set('direction', state.direction);
+        try {
+            const res = await fetch(API_URL + '?' + params.toString());
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            lastTotalPages = Math.max(1, data.totalPages || 1);
+            renderRows(data.content);
+            summaryLine.textContent = '유니크 패킷 ' + data.totalElements + '건 · ' + (data.number + 1) + '/' + (data.totalPages || 1) + ' 페이지 (메모리 기준)';
+            pager.classList.toggle('hidden', data.totalPages <= 1);
+            pageInfo.textContent = (data.number + 1) + ' / ' + (data.totalPages || 1);
+            btnFirst.disabled = data.first;
+            btnPrev.disabled = data.first;
+            btnNext.disabled = data.last;
+            btnLast.disabled = data.last;
+        } catch (e) {
+            summaryLine.textContent = '';
+            packetRows.innerHTML = '<tr><td colspan="5" class="px-5 py-8 text-center text-red-600">불러오기 실패</td></tr>';
+            errorLine.textContent = e.message || String(e);
+            errorLine.classList.remove('hidden');
+            pager.classList.add('hidden');
+        }
+    }
+
+    searchForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        state.header = (headerManual.value || '').trim().toUpperCase();
+        state.direction = directionSelect.value || '';
+        state.size = parseInt(sizeSelect.value, 10) || 20;
+        state.page = 0;
+        loadPage();
+    });
+
+    resetBtn.addEventListener('click', function () {
+        headerManual.value = '';
+        directionSelect.value = '';
+        sizeSelect.value = '20';
+        state = { page: 0, size: 20, header: '', direction: '' };
+        loadPage();
+    });
+
+    btnFirst.addEventListener('click', function () { state.page = 0; loadPage(); });
+    btnPrev.addEventListener('click', function () { if (state.page > 0) { state.page--; loadPage(); } });
+    btnNext.addEventListener('click', function () { if (state.page < lastTotalPages - 1) { state.page++; loadPage(); } });
+    btnLast.addEventListener('click', function () { state.page = lastTotalPages - 1; loadPage(); });
+
+    loadPage();
+})();
+/*]]>*/
+</script>
+</body>
+</html>

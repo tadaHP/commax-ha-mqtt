@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('패킷 확인')}"></head>
+<body class="bg-gray-100 font-sans">
+    <div th:replace="~{fragments/nav :: nav}"></div>
+    <div class="container mx-auto p-8 max-w-3xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">패킷 확인</h1>
+        <p class="text-gray-600 mb-6">
+            아래에 HEX(공백 유무 무관)를 입력한 뒤 <strong>모니터 시작</strong>을 누르면,
+            실시간 캡처와 동일한 스트림에서 해당 패턴이 포함된 패킷이 올 때마다 <strong>마지막 수신 시각</strong>이 갱신됩니다.
+            캡처 서버가 꺼져 있으면 자동으로 캡처를 켭니다.
+        </p>
+
+        <div class="bg-white shadow-md rounded-lg p-6 space-y-4">
+            <div>
+                <label for="patternInput" class="block text-sm font-medium text-gray-700 mb-1">찾을 패킷 (HEX 일부 또는 전체)</label>
+                <input type="text" id="patternInput" placeholder="예: B0 01 또는 B00101FF"
+                       class="w-full font-mono border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button id="startBtn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
+                    모니터 시작
+                </button>
+                <button id="stopBtn" type="button" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50" disabled>
+                    모니터 중지
+                </button>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4">
+                <p class="text-sm text-gray-500 mb-1">마지막 일치 수신</p>
+                <p id="lastSeen" class="text-xl font-mono font-semibold text-gray-900">—</p>
+                <p id="matchHint" class="text-sm text-gray-500 mt-2">일치 횟수: <span id="matchCount">0</span></p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const patternInput = document.getElementById('patternInput');
+    const lastSeen = document.getElementById('lastSeen');
+    const matchCount = document.getElementById('matchCount');
+    let eventSource = null;
+    let matchTotal = 0;
+
+    function normalizeHex(s) {
+        return (s || '').replace(/\s+/g, '').toUpperCase();
+    }
+
+    function parseReceivedAt(v) {
+        if (v == null) {
+            return new Date();
+        }
+        if (typeof v === 'string') {
+            const d = new Date(v);
+            return isNaN(d.getTime()) ? new Date() : d;
+        }
+        if (Array.isArray(v) && v.length >= 3) {
+            const y = v[0], mo = v[1], d = v[2];
+            const h = v[3] ?? 0, mi = v[4] ?? 0, s = v[5] ?? 0;
+            const nano = v[6] ?? 0;
+            return new Date(y, mo - 1, d, h, mi, s, Math.floor(nano / 1e6));
+        }
+        return new Date();
+    }
+
+    function packetMatches(packet, patternNorm) {
+        if (!patternNorm || patternNorm.length < 2) {
+            return false;
+        }
+        const raw = normalizeHex(packet.rawData || '');
+        if (raw.includes(patternNorm)) {
+            return true;
+        }
+        const notes = (packet.notes || '').toUpperCase().replace(/\s+/g, '');
+        return notes.includes(patternNorm);
+    }
+
+    const stopMonitor = async () => {
+        if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+        }
+        try {
+            await fetch('/capture/stop', { method: 'POST' });
+        } catch (e) {
+            console.warn(e);
+        }
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    };
+
+    startBtn.addEventListener('click', async () => {
+        const patternNorm = normalizeHex(patternInput.value.trim());
+        if (patternNorm.length < 2) {
+            alert('패턴은 2자 이상 HEX로 입력해 주세요.');
+            return;
+        }
+
+        await stopMonitor();
+        matchTotal = 0;
+        matchCount.textContent = '0';
+        lastSeen.textContent = '대기 중…';
+
+        try {
+            await fetch('/capture/start', { method: 'POST' });
+        } catch (e) {
+            console.error(e);
+            alert('캡처 시작에 실패했습니다.');
+            return;
+        }
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        eventSource = new EventSource('/capture/events');
+        eventSource.addEventListener('packet', event => {
+            try {
+                const packet = JSON.parse(event.data);
+                if (!packetMatches(packet, patternNorm)) {
+                    return;
+                }
+                matchTotal += 1;
+                matchCount.textContent = String(matchTotal);
+                const t = parseReceivedAt(packet.receivedAt);
+                lastSeen.textContent = t.toLocaleString();
+            } catch (err) {
+                console.error(err);
+            }
+        });
+        eventSource.onerror = () => {
+            stopMonitor();
+        };
+    });
+
+    stopBtn.addEventListener('click', () => {
+        stopMonitor();
+    });
+</script>
+</body>
+</html>

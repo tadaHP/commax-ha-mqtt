@@ -34,7 +34,18 @@ public class DeviceEntity {
 
     @Column(name = "index_number", nullable = false)
     private int index;
-    
+
+    /**
+     * HA/MQTT에 노출할지 여부. {@code null}은 기존 DB 행 등 미설정으로 간주해 노출(기존 동작 유지),
+     * {@code false}는 비활성, {@code true}는 명시적 활성.
+     */
+    @Column(name = "used")
+    private Boolean used;
+
+    public boolean isMqttPublished() {
+        return !Boolean.FALSE.equals(this.used);
+    }
+
     // @Column(name = "manufacturer", nullable = false)
     // private String manufacturer; // 제조사 이름 (예: commax_wallpad)
 

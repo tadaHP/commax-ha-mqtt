@@ -1,15 +1,16 @@
 package com.hyeonpyo.wallpadcontroller.elfin;
 
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.Optional;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
 
-import com.hyeonpyo.wallpadcontroller.device.state.DeviceStateManager;
+import com.hyeonpyo.wallpadcontroller.command.CommandQueue;
 import com.hyeonpyo.wallpadcontroller.domain.builder.CommandBuilder;
-import com.hyeonpyo.wallpadcontroller.ew11.Ew11Transport;
+import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntity;
+import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntityRepository;
+import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,8 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ElfinCommandService {
 
     private final CommandBuilder commandBuilder;
-    private final Ew11Transport ew11Transport;
-    private final DeviceStateManager deviceStateManager;
+    private final DeviceEntityRepository deviceEntityRepository;
+    private final MqttProperties mqttProperties;
+    private final CommandQueue commandQueue;
 
     public void sendCommand(String topic, MqttMessage message) {
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
@@ -46,14 +48,20 @@ public class ElfinCommandService {
             return;
         }
 
+        String uniqueId = mqttProperties.getHaTopic() + "_" + deviceType + "_" + deviceIndex;
+        Optional<DeviceEntity> registered = deviceEntityRepository.findById(uniqueId);
+        if (registered.isEmpty()) {
+            log.warn("⚠️ 등록되지 않은 기기 명령 무시: {}", uniqueId);
+            return;
+        }
+        if (Boolean.FALSE.equals(registered.get().getUsed())) {
+            log.warn("⚠️ MQTT 비활성(used=false) 기기 명령 무시: {}", uniqueId);
+            return;
+        }
+
         commandBuilder.build(deviceType, deviceIndex, field, payload)
-            .ifPresentOrElse(packet -> {
-                String collect = IntStream.range(0, packet.length)
-                        .mapToObj(i -> String.format("%02X", packet[i]))
-                        .collect(Collectors.joining(" "));
-                log.info("📦 생성된 HEX 패킷: {}", collect);
-                ew11Transport.send(packet);
-                deviceStateManager.setTargetState(deviceType, deviceIndex, field, payload);
+            .ifPresentOrElse(command -> {
+                commandQueue.submit(deviceType, deviceIndex, field, payload, command);
             }, () -> {
                 log.warn("⚠️ 패킷 생성 실패 - deviceType: {}, index: {}, field: {}, payload: {}", deviceType, deviceIndex, field, payload);
             });

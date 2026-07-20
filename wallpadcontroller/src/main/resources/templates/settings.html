@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('운영 설정')}"></head>
+<body class="bg-slate-50 text-slate-800">
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main class="container mx-auto max-w-4xl p-4 sm:p-8">
+  <h1 class="text-2xl font-bold">운영 설정</h1>
+  <p class="mt-1 text-sm text-slate-600">저장하면 MQTT·EW11 연결을 즉시 다시 구성합니다. 비밀번호를 비워두면 기존 값이 유지됩니다.</p>
+  <div id="status" class="mt-4 rounded border p-3 text-sm">설정을 불러오는 중입니다.</div>
+  <form id="settingsForm" class="mt-5 space-y-5">
+    <section class="rounded-lg bg-white p-5 shadow"><h2 class="mb-4 text-lg font-semibold">MQTT / Home Assistant</h2><div class="grid gap-4 sm:grid-cols-2">
+      <label>Host<input required name="mqttHost" class="field"></label><label>Port<input required type="number" min="1" max="65535" name="mqttPort" class="field"></label>
+      <label>Client ID<input required name="mqttClientId" class="field"></label><label>Username<input name="mqttUsername" class="field"></label>
+      <label>Password<input type="password" name="mqttPassword" placeholder="변경할 때만 입력" class="field"></label><label>HA topic<input required name="haTopic" class="field"></label>
+    </div></section>
+    <section class="rounded-lg bg-white p-5 shadow"><h2 class="mb-4 text-lg font-semibold">EW11 전송</h2><div class="grid gap-4 sm:grid-cols-2">
+      <label>Transport<select name="transport" id="transport" class="field"><option value="UDP">UDP</option><option value="MQTT">MQTT</option></select></label>
+      <div></div><label class="mqtt-only">MQTT 송신 topic<input name="ew11MqttSendTopic" class="field"></label><label class="mqtt-only">MQTT 수신 topic<input name="ew11MqttReceiveTopic" class="field"></label>
+      <label class="udp-only">UDP 송신 host<input name="udpSendHost" class="field"></label><label class="udp-only">UDP 송신 port<input type="number" min="1" max="65535" name="udpSendPort" class="field"></label>
+      <label class="udp-only">UDP 수신 port<input type="number" min="1" max="65535" name="udpListenPort" class="field"></label><label class="udp-only">UDP buffer<input type="number" min="8" max="65535" name="udpBufferSize" class="field"></label>
+    </div></section>
+    <section class="rounded-lg bg-white p-5 shadow"><h2 class="mb-4 text-lg font-semibold">EW11 재부팅</h2><div class="grid gap-4 sm:grid-cols-2">
+      <label class="flex items-center gap-2"><input type="checkbox" name="rebootEnabled"> 사용</label><div></div>
+      <label>Host<input name="rebootHost" class="field"></label><label>Username<input name="rebootUsername" class="field"></label>
+      <label>Password<input type="password" name="rebootPassword" placeholder="변경할 때만 입력" class="field"></label><label>주기<input name="rebootInterval" placeholder="PT12H" class="field"></label>
+    </div></section>
+    <div class="flex flex-wrap gap-3"><button class="rounded bg-blue-600 px-4 py-2 font-medium text-white" type="submit">저장 및 즉시 적용</button><button id="importEnv" class="rounded border border-slate-400 px-4 py-2" type="button">환경 변수 강제 반영</button></div>
+  </form>
+</main>
+<style>.field{display:block;width:100%;margin-top:.35rem;border:1px solid #cbd5e1;border-radius:.375rem;padding:.5rem}label{font-size:.875rem;font-weight:500}</style>
+<script>
+const form=document.getElementById('settingsForm'), status=document.getElementById('status');
+function state(data){ const error=data.lastError; status.className='mt-4 rounded border p-3 text-sm '+(data.ok?'border-green-300 bg-green-50':'border-red-300 bg-red-50'); status.textContent=data.ok?`저장된 설정 적용됨 · MQTT ${data.mqttConnected?'연결됨':'연결 안 됨'}`:(error||'설정을 적용하지 못했습니다. DB 값은 저장되어 있습니다.'); }
+function transport(){ const udp=form.transport.value==='UDP'; document.querySelectorAll('.udp-only').forEach(e=>e.hidden=!udp); document.querySelectorAll('.mqtt-only').forEach(e=>e.hidden=udp); }
+function fill(s){ Object.entries(s).forEach(([key,value])=>{const el=form.elements.namedItem(key);if(!el)return;if(el.type==='checkbox')el.checked=Boolean(value);else el.value=value??'';}); transport(); }
+async function load(){const r=await fetch('/api/settings');const d=await r.json();fill(d.settings);state(d);}
+async function apply(url, method, payload){const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:payload?JSON.stringify(payload):undefined});const d=await r.json();if(d.settings)fill(d.settings);state(d);}
+form.addEventListener('submit',e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form));data.rebootEnabled=form.rebootEnabled.checked;apply('/api/settings','PUT',data)}); document.getElementById('importEnv').onclick=()=>apply('/api/settings/import-env?force=true','POST'); form.transport.onchange=transport; load();
+</script>
+</body></html>

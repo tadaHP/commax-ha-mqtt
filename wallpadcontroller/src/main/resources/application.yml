@@ -30,3 +30,12 @@ ew11:
     listen:
       port: ${EW11_UDP_LISTEN_PORT:54747}
       buffer-size: ${EW11_UDP_BUFFER_SIZE:512}
+  reboot:
+    enabled: ${EW11_REBOOT_ENABLED:false}
+    host: ${EW11_REBOOT_HOST:}
+    username: ${EW11_REBOOT_USERNAME:}
+    password: ${EW11_REBOOT_PASSWORD:}
+    interval: ${EW11_REBOOT_INTERVAL:12h}
+
+app:
+  packet-log-retention-days: ${PACKET_LOG_RETENTION_DAYS:30}

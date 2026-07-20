@@ -1,7 +1,7 @@
 package com.hyeonpyo.wallpadcontroller.domain.definition.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -33,5 +33,5 @@ public class DeviceType {
 
     @OneToMany(mappedBy = "deviceType", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<PacketType> packetTypes = new ArrayList<>();
+    private Set<PacketType> packetTypes = new LinkedHashSet<>();
 }
