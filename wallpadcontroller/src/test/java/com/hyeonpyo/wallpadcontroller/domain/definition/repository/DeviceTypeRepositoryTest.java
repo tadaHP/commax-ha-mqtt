@@ -9,13 +9,15 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.DeviceType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.PacketType;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingField;
 import com.hyeonpyo.wallpadcontroller.domain.definition.entity.ParsingFieldValue;
 
-@DataJpaTest
+@DataJpaTest(properties = "spring.datasource.url=jdbc:sqlite::memory:")
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class DeviceTypeRepositoryTest {
 
     @Autowired

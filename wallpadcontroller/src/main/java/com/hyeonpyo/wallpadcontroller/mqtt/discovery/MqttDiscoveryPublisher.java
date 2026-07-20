@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntity;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntityRepository;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
+import com.hyeonpyo.wallpadcontroller.settings.RuntimeConnectionManager;
 
 import static com.hyeonpyo.wallpadcontroller.domain.device.DeviceKey.*;
 
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MqttDiscoveryPublisher {
 
     private final DeviceEntityRepository deviceEntityRepository;
-    private final MqttClient mqttClient;
+    private final RuntimeConnectionManager connections;
 
     private final MqttProperties mqttProperties;
     private static final String DISCOVERY_PREFIX = "homeassistant";
@@ -105,7 +105,7 @@ public class MqttDiscoveryPublisher {
                     ecoPayload.put("unique_id", uniqueId + "_ecomode");
                     ecoPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/ecomode");
                     ecoPayload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/ecomode");
-                    mqttClient.publish(ecoTopic, objectMapper.writeValueAsBytes(ecoPayload), 1, true);
+                    connections.publish(ecoTopic, objectMapper.writeValueAsBytes(ecoPayload), 1, true);
 
                     String cutoffTopic = DISCOVERY_PREFIX + "/number/" + baseId + "_cutoff_value/config";
                     Map<String, Object> cutoffPayload = new HashMap<>(payload);
@@ -119,7 +119,7 @@ public class MqttDiscoveryPublisher {
                     cutoffPayload.put("max", 500);
                     cutoffPayload.put("mode", "box");
                     cutoffPayload.put("unit_of_measurement", "W");
-                    mqttClient.publish(cutoffTopic, objectMapper.writeValueAsBytes(cutoffPayload), 1, true);
+                    connections.publish(cutoffTopic, objectMapper.writeValueAsBytes(cutoffPayload), 1, true);
 
                     String wattTopic = DISCOVERY_PREFIX + "/sensor/" + baseId + "_watt/config";
                     Map<String, Object> wattPayload = new HashMap<>(payload);
@@ -130,7 +130,7 @@ public class MqttDiscoveryPublisher {
                     wattPayload.put("unit_of_measurement", "W");
                     wattPayload.put("device_class", "power");
                     wattPayload.put("state_class", "measurement");
-                    mqttClient.publish(wattTopic, objectMapper.writeValueAsBytes(wattPayload), 1, true);
+                    connections.publish(wattTopic, objectMapper.writeValueAsBytes(wattPayload), 1, true);
                 }
             }
             case Fan -> {
@@ -199,7 +199,7 @@ public class MqttDiscoveryPublisher {
                 binPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/power");
                 binPayload.put("payload_on", "ON");
                 binPayload.put("payload_off", "OFF");
-                mqttClient.publish(binTopic, objectMapper.writeValueAsBytes(binPayload), 1, true);
+                connections.publish(binTopic, objectMapper.writeValueAsBytes(binPayload), 1, true);
             }
             case EV -> {
                 String evDiscoveryId = "ev_status_" + device.getIndex();
@@ -220,14 +220,14 @@ public class MqttDiscoveryPublisher {
                 callPayload.put("icon", "mdi:elevator");
                 callPayload.put("availability", payload.get("availability"));
                 callPayload.put("device", payload.get("device"));
-                mqttClient.publish(callTopic, objectMapper.writeValueAsBytes(callPayload), 1, true);
+                connections.publish(callTopic, objectMapper.writeValueAsBytes(callPayload), 1, true);
             }
             default -> log.warn("⚠️ 지원되지 않는 장치 타입: {}", device.getType());
         }
 
         if (topic != null) {
             String json = objectMapper.writeValueAsString(payload);
-            mqttClient.publish(topic, json.getBytes(), 1, true);
+            connections.publish(topic, json.getBytes(), 1, true);
             log.info("📡 MQTT Discovery 등록: {}", topic);
         }
     }
@@ -236,25 +236,25 @@ public class MqttDiscoveryPublisher {
         String baseId = device.getType().name() + device.getIndex();
         byte[] empty = new byte[0];
         switch (device.getType()) {
-            case Light -> mqttClient.publish(DISCOVERY_PREFIX + "/light/" + baseId + "/config", empty, 1, true);
+            case Light -> connections.publish(DISCOVERY_PREFIX + "/light/" + baseId + "/config", empty, 1, true);
             case LightBreaker, Outlet -> {
-                mqttClient.publish(DISCOVERY_PREFIX + "/switch/" + baseId + "/config", empty, 1, true);
+                connections.publish(DISCOVERY_PREFIX + "/switch/" + baseId + "/config", empty, 1, true);
                 if (device.getType() == Outlet) {
-                    mqttClient.publish(DISCOVERY_PREFIX + "/switch/" + baseId + "_ecomode/config", empty, 1, true);
-                    mqttClient.publish(DISCOVERY_PREFIX + "/number/" + baseId + "_cutoff_value/config", empty, 1, true);
-                    mqttClient.publish(DISCOVERY_PREFIX + "/sensor/" + baseId + "_watt/config", empty, 1, true);
+                    connections.publish(DISCOVERY_PREFIX + "/switch/" + baseId + "_ecomode/config", empty, 1, true);
+                    connections.publish(DISCOVERY_PREFIX + "/number/" + baseId + "_cutoff_value/config", empty, 1, true);
+                    connections.publish(DISCOVERY_PREFIX + "/sensor/" + baseId + "_watt/config", empty, 1, true);
                 }
             }
-            case Fan -> mqttClient.publish(DISCOVERY_PREFIX + "/fan/" + baseId + "/config", empty, 1, true);
-            case Thermo -> mqttClient.publish(DISCOVERY_PREFIX + "/climate/" + baseId + "/config", empty, 1, true);
+            case Fan -> connections.publish(DISCOVERY_PREFIX + "/fan/" + baseId + "/config", empty, 1, true);
+            case Thermo -> connections.publish(DISCOVERY_PREFIX + "/climate/" + baseId + "/config", empty, 1, true);
             case Gas -> {
-                mqttClient.publish(DISCOVERY_PREFIX + "/button/" + baseId + "/config", empty, 1, true);
-                mqttClient.publish(DISCOVERY_PREFIX + "/binary_sensor/" + baseId + "/config", empty, 1, true);
+                connections.publish(DISCOVERY_PREFIX + "/button/" + baseId + "/config", empty, 1, true);
+                connections.publish(DISCOVERY_PREFIX + "/binary_sensor/" + baseId + "/config", empty, 1, true);
             }
             case EV -> {
                 String evDiscoveryId = "ev_status_" + device.getIndex();
-                mqttClient.publish(DISCOVERY_PREFIX + "/sensor/" + evDiscoveryId + "/config", empty, 1, true);
-                mqttClient.publish(DISCOVERY_PREFIX + "/button/" + baseId + "_call/config", empty, 1, true);
+                connections.publish(DISCOVERY_PREFIX + "/sensor/" + evDiscoveryId + "/config", empty, 1, true);
+                connections.publish(DISCOVERY_PREFIX + "/button/" + baseId + "_call/config", empty, 1, true);
             }
             default -> { }
         }

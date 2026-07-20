@@ -1,49 +1,40 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Commax 설정</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-</head>
-<body class="bg-gray-50 font-sans">
-  <main class="container mx-auto max-w-4xl p-8">
-    <h1 class="mb-2 text-3xl font-bold text-gray-800">장치 설정</h1>
-    <p class="mb-6 text-gray-600">수신으로 발견된 장치를 활성화해야 Home Assistant에 등록되고 제어됩니다.</p>
-    <div class="overflow-hidden rounded-lg bg-white shadow">
-      <table class="min-w-full text-left text-sm">
-        <thead class="bg-gray-100 text-xs uppercase text-gray-600">
-          <tr><th class="px-5 py-3">장치</th><th class="px-5 py-3">번호</th><th class="px-5 py-3">고유 ID</th><th class="px-5 py-3">Home Assistant 활성화</th></tr>
-        </thead>
-        <tbody id="devices"><tr><td class="px-5 py-4" colspan="4">장치를 불러오는 중입니다.</td></tr></tbody>
-      </table>
-    </div>
-  </main>
-  <script>
-    const tbody = document.getElementById('devices');
-    async function setEnabled(id, enabled) {
-      const response = await fetch(`/api/devices/${encodeURIComponent(id)}/enabled`, {
-        method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({enabled})
-      });
-      if (!response.ok) { alert('장치 설정을 저장하지 못했습니다.'); }
-      await loadDevices();
-    }
-    async function loadDevices() {
-      const response = await fetch('/api/devices');
-      if (!response.ok) { tbody.innerHTML = '<tr><td class="px-5 py-4" colspan="4">장치 목록을 불러오지 못했습니다.</td></tr>'; return; }
-      const devices = await response.json();
-      tbody.innerHTML = devices.length ? '' : '<tr><td class="px-5 py-4" colspan="4">아직 발견된 장치가 없습니다.</td></tr>';
-      devices.forEach(device => {
-        const row = document.createElement('tr'); row.className = 'border-t border-gray-100';
-        row.innerHTML = `<td class="px-5 py-4">${device.type}</td><td class="px-5 py-4">${device.index}</td><td class="px-5 py-4 font-mono">${device.uniqueId}</td>`;
-        const action = document.createElement('td'); action.className = 'px-5 py-4';
-        const button = document.createElement('button');
-        button.className = device.enabled ? 'rounded bg-red-600 px-3 py-1 text-white' : 'rounded bg-green-600 px-3 py-1 text-white';
-        button.textContent = device.enabled ? '비활성화' : '활성화';
-        button.onclick = () => setEnabled(device.uniqueId, !device.enabled); action.appendChild(button); row.appendChild(action); tbody.appendChild(row);
-      });
-    }
-    loadDevices();
-  </script>
-</body>
-</html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('운영 설정')}"></head>
+<body class="bg-slate-50 text-slate-800">
+<div th:replace="~{fragments/nav :: nav}"></div>
+<main class="container mx-auto max-w-4xl p-4 sm:p-8">
+  <h1 class="text-2xl font-bold">운영 설정</h1>
+  <p class="mt-1 text-sm text-slate-600">저장하면 MQTT·EW11 연결을 즉시 다시 구성합니다. 비밀번호를 비워두면 기존 값이 유지됩니다.</p>
+  <div id="status" class="mt-4 rounded border p-3 text-sm">설정을 불러오는 중입니다.</div>
+  <form id="settingsForm" class="mt-5 space-y-5">
+    <section class="rounded-lg bg-white p-5 shadow"><h2 class="mb-4 text-lg font-semibold">MQTT / Home Assistant</h2><div class="grid gap-4 sm:grid-cols-2">
+      <label>Host<input required name="mqttHost" class="field"></label><label>Port<input required type="number" min="1" max="65535" name="mqttPort" class="field"></label>
+      <label>Client ID<input required name="mqttClientId" class="field"></label><label>Username<input name="mqttUsername" class="field"></label>
+      <label>Password<input type="password" name="mqttPassword" placeholder="변경할 때만 입력" class="field"></label><label>HA topic<input required name="haTopic" class="field"></label>
+    </div></section>
+    <section class="rounded-lg bg-white p-5 shadow"><h2 class="mb-4 text-lg font-semibold">EW11 전송</h2><div class="grid gap-4 sm:grid-cols-2">
+      <label>Transport<select name="transport" id="transport" class="field"><option value="UDP">UDP</option><option value="MQTT">MQTT</option></select></label>
+      <div></div><label class="mqtt-only">MQTT 송신 topic<input name="ew11MqttSendTopic" class="field"></label><label class="mqtt-only">MQTT 수신 topic<input name="ew11MqttReceiveTopic" class="field"></label>
+      <label class="udp-only">UDP 송신 host<input name="udpSendHost" class="field"></label><label class="udp-only">UDP 송신 port<input type="number" min="1" max="65535" name="udpSendPort" class="field"></label>
+      <label class="udp-only">UDP 수신 port<input type="number" min="1" max="65535" name="udpListenPort" class="field"></label><label class="udp-only">UDP buffer<input type="number" min="8" max="65535" name="udpBufferSize" class="field"></label>
+    </div></section>
+    <section class="rounded-lg bg-white p-5 shadow"><h2 class="mb-4 text-lg font-semibold">EW11 재부팅</h2><div class="grid gap-4 sm:grid-cols-2">
+      <label class="flex items-center gap-2"><input type="checkbox" name="rebootEnabled"> 사용</label><div></div>
+      <label>Host<input name="rebootHost" class="field"></label><label>Username<input name="rebootUsername" class="field"></label>
+      <label>Password<input type="password" name="rebootPassword" placeholder="변경할 때만 입력" class="field"></label><label>주기<input name="rebootInterval" placeholder="PT12H" class="field"></label>
+    </div></section>
+    <div class="flex flex-wrap gap-3"><button class="rounded bg-blue-600 px-4 py-2 font-medium text-white" type="submit">저장 및 즉시 적용</button><button id="importEnv" class="rounded border border-slate-400 px-4 py-2" type="button">환경 변수 강제 반영</button></div>
+  </form>
+</main>
+<style>.field{display:block;width:100%;margin-top:.35rem;border:1px solid #cbd5e1;border-radius:.375rem;padding:.5rem}label{font-size:.875rem;font-weight:500}</style>
+<script>
+const form=document.getElementById('settingsForm'), status=document.getElementById('status');
+function state(data){ const error=data.lastError; status.className='mt-4 rounded border p-3 text-sm '+(data.ok?'border-green-300 bg-green-50':'border-red-300 bg-red-50'); status.textContent=data.ok?`저장된 설정 적용됨 · MQTT ${data.mqttConnected?'연결됨':'연결 안 됨'}`:(error||'설정을 적용하지 못했습니다. DB 값은 저장되어 있습니다.'); }
+function transport(){ const udp=form.transport.value==='UDP'; document.querySelectorAll('.udp-only').forEach(e=>e.hidden=!udp); document.querySelectorAll('.mqtt-only').forEach(e=>e.hidden=udp); }
+function fill(s){ Object.entries(s).forEach(([key,value])=>{const el=form.elements.namedItem(key);if(!el)return;if(el.type==='checkbox')el.checked=Boolean(value);else el.value=value??'';}); transport(); }
+async function load(){const r=await fetch('/api/settings');const d=await r.json();fill(d.settings);state(d);}
+async function apply(url, method, payload){const r=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:payload?JSON.stringify(payload):undefined});const d=await r.json();if(d.settings)fill(d.settings);state(d);}
+form.addEventListener('submit',e=>{e.preventDefault();const data=Object.fromEntries(new FormData(form));data.rebootEnabled=form.rebootEnabled.checked;apply('/api/settings','PUT',data)}); document.getElementById('importEnv').onclick=()=>apply('/api/settings/import-env?force=true','POST'); form.transport.onchange=transport; load();
+</script>
+</body></html>
