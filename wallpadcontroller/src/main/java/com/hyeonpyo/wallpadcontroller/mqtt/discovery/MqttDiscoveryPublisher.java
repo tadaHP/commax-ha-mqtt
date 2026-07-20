@@ -208,6 +208,19 @@ public class MqttDiscoveryPublisher {
                 payload.put("default_entity_id", "sensor." + objectId);
                 payload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/floor");
                 payload.put("icon", "mdi:elevator");
+
+                // 층수 Sensor와 호출 Button은 별도 Discovery config로 발행한다.
+                String callTopic = DISCOVERY_PREFIX + "/button/" + baseId + "_call/config";
+                Map<String, Object> callPayload = new HashMap<>();
+                callPayload.put("name", "EV " + device.getIndex() + " 호출");
+                callPayload.put("unique_id", uniqueId + "_call");
+                callPayload.put("default_entity_id", "button." + objectId + "_call");
+                callPayload.put("command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/button");
+                callPayload.put("payload_press", "PRESS");
+                callPayload.put("icon", "mdi:elevator");
+                callPayload.put("availability", payload.get("availability"));
+                callPayload.put("device", payload.get("device"));
+                mqttClient.publish(callTopic, objectMapper.writeValueAsBytes(callPayload), 1, true);
             }
             default -> log.warn("⚠️ 지원되지 않는 장치 타입: {}", device.getType());
         }
@@ -241,6 +254,7 @@ public class MqttDiscoveryPublisher {
             case EV -> {
                 String evDiscoveryId = "ev_status_" + device.getIndex();
                 mqttClient.publish(DISCOVERY_PREFIX + "/sensor/" + evDiscoveryId + "/config", empty, 1, true);
+                mqttClient.publish(DISCOVERY_PREFIX + "/button/" + baseId + "_call/config", empty, 1, true);
             }
             default -> { }
         }
