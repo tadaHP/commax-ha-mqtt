@@ -46,6 +46,21 @@ public class CommandMappingRule {
     @Column(name = "rule_name", nullable = false)
     private String ruleName;
 
+    @Column(name = "ack_pattern")
+    private String ackPattern;
+
+    @Column(name = "ack_mask")
+    private String ackMask;
+
+    @Column(name = "ack_timeout_ms")
+    private Long ackTimeoutMs;
+
+    @Column(name = "retry_delay_ms")
+    private Long retryDelayMs;
+
+    @Column(name = "max_retries")
+    private Integer maxRetries;
+
     @Builder.Default
     @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CommandMappingDetail> details = new ArrayList<>();

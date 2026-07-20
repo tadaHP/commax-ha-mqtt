@@ -1,8 +1,6 @@
 package com.hyeonpyo.wallpadcontroller.elfin;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
@@ -12,6 +10,7 @@ import com.hyeonpyo.wallpadcontroller.device.state.DeviceStateManager;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntity;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntityRepository;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceKey;
+import com.hyeonpyo.wallpadcontroller.domain.device.DeviceRegistryService;
 import com.hyeonpyo.wallpadcontroller.mqtt.sender.MqttSendService;
 import com.hyeonpyo.wallpadcontroller.parser.PacketParser;
 import com.hyeonpyo.wallpadcontroller.parser.commax.type.PacketKind;
@@ -34,29 +33,15 @@ public class ElfinReceiveService {
     private final MqttSendService mqttSendService;
     private final DeviceStateManager deviceStateManager;
     private final DeviceEntityRepository deviceEntityRepository;
+    private final DeviceRegistryService deviceRegistryService;
     private final CommandQueue commandQueue;
-
-    private final Map<String, DeviceEntity> registeredDevices = new ConcurrentHashMap<>();
 
 
     @PostConstruct
     public void init() {
         mqttSendService.publish(mqttProperties.getHaTopic() + "/status", "online", 1, true);
 
-        List<DeviceEntity> allDevices = deviceEntityRepository.findAll();
-        for (DeviceEntity device : allDevices) {
-            registeredDevices.put(device.getUniqueId(), device);
-        }
-        log.info("📦 등록된 기기 {}개 로드 완료", registeredDevices.size());
-    }
-
-    /** DB의 전체 등록 기기를 읽어 인메모리 캐시를 덮어씁니다. (웹/API에서 used 등 변경 후 호출) */
-    public void reloadRegisteredDevicesFromRepository() {
-        registeredDevices.clear();
-        for (DeviceEntity device : deviceEntityRepository.findAll()) {
-            registeredDevices.put(device.getUniqueId(), device);
-        }
-        log.info("📦 등록 기기 캐시 전체 갱신: {}개", registeredDevices.size());
+        log.info("📦 등록된 기기 {}개 로드 완료", deviceRegistryService.size());
     }
 
     @PreDestroy
@@ -89,7 +74,7 @@ public class ElfinReceiveService {
             if (kind == PacketKind.STATE) {
                 String uniqueId = mqttProperties.getHaTopic() + "_" + deviceType + "_" + deviceIndex;
 
-                if (!registeredDevices.containsKey(uniqueId)) {
+                if (!deviceRegistryService.contains(uniqueId)) {
                     try {
                         DeviceKey key = DeviceKey.valueOf(deviceType);
                         DeviceEntity entity = DeviceEntity.builder()
@@ -100,15 +85,15 @@ public class ElfinReceiveService {
                                 .used(false)
                                 .build();
                         DeviceEntity saved = deviceEntityRepository.save(entity);
-                        registeredDevices.put(uniqueId, saved);
+                        deviceRegistryService.update(saved);
                         log.info("📥 등록된 새 기기(기본 비활성): {} (index: {})", uniqueId, deviceIndex);
                     } catch (Exception e) {
                         log.error("❌ 기기 등록 실패 - {}", uniqueId, e);
                     }
                 }
 
-                DeviceEntity current = registeredDevices.get(uniqueId);
-                if (current != null && current.isMqttPublished()) {
+                DeviceEntity registeredDevice = deviceRegistryService.get(uniqueId);
+                if (registeredDevice != null && registeredDevice.isMqttPublished()) {
                     deviceStateManager.updateState(
                             deviceType,
                             deviceIndex,

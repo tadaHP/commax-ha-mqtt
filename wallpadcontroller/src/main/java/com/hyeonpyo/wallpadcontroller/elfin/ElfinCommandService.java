@@ -1,10 +1,7 @@
 package com.hyeonpyo.wallpadcontroller.elfin;
 
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.stereotype.Service;
@@ -14,7 +11,6 @@ import com.hyeonpyo.wallpadcontroller.domain.builder.CommandBuilder;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntity;
 import com.hyeonpyo.wallpadcontroller.domain.device.DeviceEntityRepository;
 import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
-import com.hyeonpyo.wallpadcontroller.service.SeenPacketMemoryStore;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +23,6 @@ public class ElfinCommandService {
     private final CommandBuilder commandBuilder;
     private final DeviceEntityRepository deviceEntityRepository;
     private final MqttProperties mqttProperties;
-    private final SeenPacketMemoryStore seenPacketMemoryStore;
     private final CommandQueue commandQueue;
 
     public void sendCommand(String topic, MqttMessage message) {
@@ -65,17 +60,8 @@ public class ElfinCommandService {
         }
 
         commandBuilder.build(deviceType, deviceIndex, field, payload)
-            .ifPresentOrElse(packet -> {
-                String collect = IntStream.range(0, packet.length)
-                        .mapToObj(i -> String.format("%02X", packet[i]))
-                        .collect(Collectors.joining(" "));
-                log.info("📦 생성된 HEX 패킷: {}", collect);
-                try {
-                    seenPacketMemoryStore.recordOutboundPacket(collect, LocalDateTime.now());
-                } catch (RuntimeException e) {
-                    log.warn("seen_packet 송신 기록 실패(명령 처리는 계속): rawHex={}, msg={}", collect, e.getMessage());
-                }
-                commandQueue.submit(deviceType, deviceIndex, field, payload, packet);
+            .ifPresentOrElse(command -> {
+                commandQueue.submit(deviceType, deviceIndex, field, payload, command);
             }, () -> {
                 log.warn("⚠️ 패킷 생성 실패 - deviceType: {}, index: {}, field: {}, payload: {}", deviceType, deviceIndex, field, payload);
             });

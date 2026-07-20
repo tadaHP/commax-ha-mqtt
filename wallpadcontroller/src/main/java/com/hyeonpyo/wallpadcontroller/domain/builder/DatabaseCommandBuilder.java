@@ -31,7 +31,7 @@ public class DatabaseCommandBuilder implements CommandBuilder {
     private static final int PACKET_LENGTH = 8;
 
     @Override
-    public Optional<byte[]> build(String type, int index, String field, String payload) {
+    public Optional<BuiltCommand> build(String type, int index, String field, String payload) {
         // deviceType 찾기 (ex: Light, Fan 등)
         Optional<CommandMappingRule> ruleOptional = ruleRepository.findWithDetailsByDeviceTypeNameAndExternalFieldAndExternalPayload(type, field, payload);
         if (ruleOptional.isEmpty()) {
@@ -66,7 +66,7 @@ public class DatabaseCommandBuilder implements CommandBuilder {
 
         // 체크섬 계산
         packet[PACKET_LENGTH - 1] = calculateChecksum(packet);
-        return Optional.of(packet);
+        return Optional.of(new BuiltCommand(packet, rule));
     }
 
     // 내부 필드 → hex 값 매핑

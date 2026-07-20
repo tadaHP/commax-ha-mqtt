@@ -1,49 +1,35 @@
 package com.hyeonpyo.wallpadcontroller.command;
 
-import java.util.Locale;
+import java.util.Arrays;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 
-/**
- * Temporary Commax ACK profiles. They deliberately use a mask for fields that
- * vary by model; the next database migration will move these profiles into the
- * packet-rule tables.
- */
+import com.hyeonpyo.wallpadcontroller.domain.definition.entity.CommandMappingRule;
+
+/** DB-backed ACK matcher equivalent to H2M data + mask schemas. */
 @Component
 public class CommandAckProfiles {
-    private static final byte ANY = 0x00;
-    private static final byte EXACT = (byte) 0xFF;
-
-    public Optional<AckMatcher> forCommand(String deviceType, int deviceIndex, String field, String payload) {
-        String value = payload.toUpperCase(Locale.ROOT);
-        return switch (deviceType) {
-            case "Light" -> Optional.of(new MaskedAckMatcher(
-                    new byte[] {(byte) 0xB1, onOff(value), (byte) deviceIndex},
-                    new byte[] {EXACT, EXACT, EXACT}));
-            case "LightBreaker" -> Optional.of(new MaskedAckMatcher(
-                    new byte[] {(byte) 0xA2, onOff(value), (byte) deviceIndex},
-                    new byte[] {EXACT, EXACT, EXACT}));
-            case "Thermo" -> Optional.of(new MaskedAckMatcher(
-                    new byte[] {(byte) 0x84, thermoPower(value), (byte) deviceIndex},
-                    new byte[] {EXACT, "mode".equals(field) ? EXACT : ANY, EXACT}));
-            case "Fan" -> Optional.of(new MaskedAckMatcher(
-                    new byte[] {(byte) 0xF8, 0x00, (byte) deviceIndex},
-                    new byte[] {EXACT, ANY, EXACT}));
-            case "Gas" -> Optional.of(new MaskedAckMatcher(
-                    new byte[] {(byte) 0x91}, new byte[] {EXACT}));
-            case "EV" -> Optional.of(new MaskedAckMatcher(
-                    new byte[] {0x23}, new byte[] {EXACT}));
-            // Outlet remains state-confirmed until its ACK packet is measured.
-            default -> Optional.empty();
-        };
+    public Optional<AckMatcher> forRule(CommandMappingRule rule, int deviceIndex) {
+        if (rule.getAckPattern() == null || rule.getAckPattern().isBlank()) return Optional.empty();
+        byte[] pattern = parse(rule.getAckPattern(), deviceIndex);
+        byte[] mask = rule.getAckMask() == null || rule.getAckMask().isBlank()
+                ? exactMask(pattern.length) : parse(rule.getAckMask(), deviceIndex);
+        return Optional.of(new MaskedAckMatcher(pattern, mask));
     }
 
-    private byte onOff(String value) {
-        return "ON".equals(value) ? (byte) 0x01 : 0x00;
+    private byte[] parse(String value, int deviceIndex) {
+        String[] tokens = value.trim().split("\\s+");
+        byte[] bytes = new byte[tokens.length];
+        for (int i = 0; i < tokens.length; i++) {
+            bytes[i] = (byte) ("{index}".equals(tokens[i]) ? deviceIndex : Integer.parseInt(tokens[i], 16));
+        }
+        return bytes;
     }
 
-    private byte thermoPower(String value) {
-        return "HEAT".equals(value) ? (byte) 0x81 : (byte) 0x80;
+    private byte[] exactMask(int length) {
+        byte[] mask = new byte[length];
+        Arrays.fill(mask, (byte) 0xFF);
+        return mask;
     }
 }

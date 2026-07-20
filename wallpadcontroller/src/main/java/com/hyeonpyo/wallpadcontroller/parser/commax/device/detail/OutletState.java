@@ -30,27 +30,36 @@ public class OutletState implements DeviceState {
         String ecomode = power != null && power.contains("with_eco") ? "ON" : "OFF";
 
         if ("wattage".equals(stateType)) {
-            return new OutletState(normalizePower(power), String.valueOf(decodeBcd(data1, data2, data3) / 10.0), ecomode, null);
+            return new OutletState(normalizePower(power), formatWatt(decodeBcd(data1, data2, data3)), ecomode, null);
         }
         if ("ecomode".equals(stateType)) {
-            return new OutletState(normalizePower(power), null, ecomode, String.valueOf(decodeBcd(data1, data2, data3)));
+            return new OutletState(normalizePower(power), null, ecomode, formatCutoff(decodeBcd(data1, data2, data3)));
         }
-        return new OutletState(normalizePower(power), null, ecomode, null);
+        return new OutletState(normalizePower(power), "unknown", ecomode, "unknown");
     }
 
     private static String normalizePower(String power) {
         return power != null && power.startsWith("on") ? "ON" : "OFF";
     }
 
-    private static long decodeBcd(String... values) {
+    private static Long decodeBcd(String... values) {
         long result = 0;
         for (String value : values) {
-            if (value == null || !value.matches("[0-9A-Fa-f]{2}")) return 0;
+            if (value == null || !value.matches("[0-9A-Fa-f]{2}")) return null;
             int raw = Integer.parseInt(value, 16);
+            if ((raw >> 4) > 9 || (raw & 0x0F) > 9) return null;
             int decimal = ((raw >> 4) * 10) + (raw & 0x0F);
             result = result * 100 + decimal;
         }
         return result;
+    }
+
+    private static String formatWatt(Long value) {
+        return value == null ? "unknown" : String.valueOf(value / 10.0);
+    }
+
+    private static String formatCutoff(Long value) {
+        return value == null ? "unknown" : String.valueOf(value);
     }
 
     @Override
