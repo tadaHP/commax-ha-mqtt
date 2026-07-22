@@ -26,8 +26,10 @@ import org.springframework.beans.factory.ObjectProvider;
 
 import com.hyeonpyo.wallpadcontroller.elfin.ElfinCommandService;
 import com.hyeonpyo.wallpadcontroller.elfin.ElfinReceiveService;
+import com.hyeonpyo.wallpadcontroller.device.state.DeviceStateManager;
 import com.hyeonpyo.wallpadcontroller.ew11.Ew11Transport;
 import com.hyeonpyo.wallpadcontroller.properties.Ew11TransportType;
+import com.hyeonpyo.wallpadcontroller.properties.MqttProperties;
 
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,8 @@ public class RuntimeConnectionManager implements Ew11Transport {
     /** Providers break the discovery → registry → receiver construction cycle. */
     private final ObjectProvider<ElfinReceiveService> receiver;
     private final ObjectProvider<ElfinCommandService> commandService;
+    private final ObjectProvider<DeviceStateManager> stateManager;
+    private final MqttProperties mqttProperties;
     private final ScheduledExecutorService rebootExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = new Thread(r, "ew11-reboot"); thread.setDaemon(true); return thread;
     });
@@ -118,6 +122,7 @@ public class RuntimeConnectionManager implements Ew11Transport {
     private void subscribeMqtt(MqttClient client, ConnectionSettings s) throws MqttException {
         client.setCallback(callback());
         client.subscribe(s.haTopic() + "/command/#", 0);
+        client.subscribe(mqttProperties.getBirthMessage().getTopic(), 0);
         if (s.transport() == Ew11TransportType.MQTT) client.subscribe(s.ew11MqttReceiveTopic(), 0);
     }
 
@@ -128,9 +133,19 @@ public class RuntimeConnectionManager implements Ew11Transport {
                 ConnectionSettings current = settings;
                 if (current != null && current.transport() == Ew11TransportType.MQTT && topic.equals(current.ew11MqttReceiveTopic())) receiver.getObject().publishDeviceState(message.getPayload());
                 else if (current != null && topic.startsWith(current.haTopic() + "/command/")) commandService.getObject().sendCommand(topic, message);
+                else if (isHaOnlineMessage(topic, message)) {
+                    log.info("🟢 HA MQTT online 감지: 5초 후 현재 상태를 재발행합니다.");
+                    stateManager.getObject().republishAllAfter(5, TimeUnit.SECONDS);
+                }
             }
             @Override public void deliveryComplete(IMqttDeliveryToken token) { }
         };
+    }
+
+    private boolean isHaOnlineMessage(String topic, MqttMessage message) {
+        var birthMessage = mqttProperties.getBirthMessage();
+        return birthMessage.getTopic().equals(topic)
+                && birthMessage.getPayload().equalsIgnoreCase(new String(message.getPayload(), StandardCharsets.UTF_8).trim());
     }
 
     private void startUdp(ConnectionSettings current, DatagramSocket socket) {

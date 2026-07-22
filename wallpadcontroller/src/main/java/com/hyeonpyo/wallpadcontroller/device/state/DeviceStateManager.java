@@ -94,6 +94,22 @@ public class DeviceStateManager {
         targetState.computeIfAbsent(key, k -> new TargetEntry(targetValue));
     }
 
+    /**
+     * HA MQTT birth message를 받은 뒤 사용합니다. 변경 여부와 관계없이 현재 메모리
+     * 상태를 다시 발행해 HA 재시작 후 상태를 복구합니다.
+     */
+    public void republishAllAfter(long delay, TimeUnit unit) {
+        executorService.schedule(() -> {
+            int count = 0;
+            for (Map.Entry<String, String> entry : latestState.entrySet()) {
+                mqttSendService.publish(mqttProperties.getHaTopic() + "/" + entry.getKey(), entry.getValue(), 1);
+                lastPublishedState.put(entry.getKey(), entry.getValue());
+                count++;
+            }
+            log.info("📡 HA online 감지 후 현재 상태 {}건 재발행 완료", count);
+        }, delay, unit);
+    }
+
     /** MQTT에서 기기를 내릴 때 해당 기기의 상태·목표 키를 제거합니다. */
     public void clearStateForDevice(String deviceName, int deviceIndex) {
         String prefix = "state/" + deviceName + deviceIndex + "/";
