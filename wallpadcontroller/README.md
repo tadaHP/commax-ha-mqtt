@@ -94,6 +94,26 @@ volumes:
 
 위 내용중 환경변수에 맞게 채워넣으시면 작동하며, 빈값은 옵션입니다.
 
+## Home Assistant 재기동 후 상태 복구
+
+CWC는 Home Assistant MQTT 통합의 birth message를 구독합니다. HA가 MQTT에 `online`을 발행하면 5초 뒤 CWC 메모리에 있는 조명, 보일러 등 현재 상태 전체를 다시 발행합니다. 따라서 HA만 재기동한 경우에도 다음 상태 패킷이나 외부 조작을 기다리지 않고 상태를 복구할 수 있습니다.
+
+기본값은 `homeassistant/status` topic의 `online` payload입니다. **CWC 내부 YAML 파일을 수정할 필요 없이**, Docker Compose의 `environment`에 아래 값만 넣거나 변경하면 됩니다. HA에서 birth message topic/payload를 별도로 설정했다면 그 값과 동일하게 맞추세요.
+
+| 환경변수 | 설명 | 기본값 |
+| --- | --- | --- |
+| `MQTT_HA_BIRTH_TOPIC` | HA MQTT birth message topic | `homeassistant/status` |
+| `MQTT_HA_BIRTH_PAYLOAD` | HA가 기동 완료 시 발행하는 payload | `online` |
+
+```yaml
+services:
+  wallpadcontroller:
+    environment:
+      # HA MQTT integration 기본 birth message를 쓸 경우 생략 가능
+      - MQTT_HA_BIRTH_TOPIC=homeassistant/status
+      - MQTT_HA_BIRTH_PAYLOAD=online
+```
+
 ## EW11 주기 재부팅 (옵션)
 
 **UDP / MQTT 모드 공통.** EW11 웹 API(`http://<호스트>/cmd`)에 CID 20003(재부팅) 요청을 주기적으로 보냅니다. 호스트는 항상 `EW11_REBOOT_HOST`로 지정합니다.

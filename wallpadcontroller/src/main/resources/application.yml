@@ -17,6 +17,9 @@ mqtt:
   username: ${MQTT_USERNAME:}
   password: ${MQTT_PASSWORD:}
   ha-topic: ${MQTT_HA_TOPIC:commax}
+  birth-message:
+    topic: ${MQTT_HA_BIRTH_TOPIC:homeassistant/status}
+    payload: ${MQTT_HA_BIRTH_PAYLOAD:online}
 
 ew11:
   transport: ${EW11_TRANSPORT:mqtt}
