@@ -366,3 +366,11 @@ INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'unknown1', 'fixed', false);
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'unknown2', 'fixed', false);
 INSERT INTO command_mapping_detail (rule_id, internal_field, internal_value, is_direct) VALUES (21, 'unknown3', 'fixed', false);
+
+-- Observed away state (84), for fresh databases. Existing DB raw HEX is also supported.
+INSERT INTO parsing_field_value (parsing_field_id, raw_key, hex, memo)
+SELECT pf.id, 'away', '84', '실기기 외출 모드 관측'
+FROM parsing_field pf
+JOIN packet_type pt ON pt.id = pf.packet_type_id
+JOIN device_type dt ON dt.id = pt.device_type_id
+WHERE dt.name = 'Thermo' AND pt.kind IN ('state', 'ack') AND pf.position = 1;

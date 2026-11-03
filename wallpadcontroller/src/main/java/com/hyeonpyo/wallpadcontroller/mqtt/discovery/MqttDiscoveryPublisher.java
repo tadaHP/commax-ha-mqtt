@@ -180,6 +180,18 @@ public class MqttDiscoveryPublisher {
                 payload.put("mode_command_topic", mqttProperties.getHaTopic() + "/command/" + baseId + "/mode");
                 payload.put("action_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/action");
                 payload.put("modes", List.of("off", "heat"));
+                Map<String, Object> awayPayload = new HashMap<>();
+                awayPayload.put("device", payload.get("device"));
+                awayPayload.put("availability", payload.get("availability"));
+                awayPayload.put("name", baseId + " 외출");
+                awayPayload.put("default_entity_id", "binary_sensor." + objectId + "_away");
+                awayPayload.put("unique_id", uniqueId + "_away");
+                awayPayload.put("state_topic", mqttProperties.getHaTopic() + "/state/" + baseId + "/away");
+                awayPayload.put("payload_on", "ON");
+                awayPayload.put("payload_off", "OFF");
+                awayPayload.put("icon", "mdi:home-export-outline");
+                connections.publish(DISCOVERY_PREFIX + "/binary_sensor/" + baseId + "_away/config",
+                        objectMapper.writeValueAsBytes(awayPayload), 1, true);
                 payload.put("temperature_unit", "C");
                 payload.put("min_temp", 5);
                 payload.put("max_temp", 40);
@@ -246,7 +258,10 @@ public class MqttDiscoveryPublisher {
                 }
             }
             case Fan -> connections.publish(DISCOVERY_PREFIX + "/fan/" + baseId + "/config", empty, 1, true);
-            case Thermo -> connections.publish(DISCOVERY_PREFIX + "/climate/" + baseId + "/config", empty, 1, true);
+            case Thermo -> {
+                connections.publish(DISCOVERY_PREFIX + "/climate/" + baseId + "/config", empty, 1, true);
+                connections.publish(DISCOVERY_PREFIX + "/binary_sensor/" + baseId + "_away/config", empty, 1, true);
+            }
             case Gas -> {
                 connections.publish(DISCOVERY_PREFIX + "/button/" + baseId + "/config", empty, 1, true);
                 connections.publish(DISCOVERY_PREFIX + "/binary_sensor/" + baseId + "/config", empty, 1, true);

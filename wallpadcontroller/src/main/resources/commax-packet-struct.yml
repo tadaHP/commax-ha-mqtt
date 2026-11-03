@@ -192,6 +192,7 @@ Thermo:
         values:
           "idle": "81"
           "heating": "83"
+          "away": "84"
           "off": "80"
       "2":
         name: deviceId
@@ -221,6 +222,7 @@ Thermo:
         values:
           "idle": "81"
           "heating": "83"
+          "away": "84"
           "off": "80"
       "2":
         name: deviceId

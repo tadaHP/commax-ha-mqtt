@@ -40,5 +40,11 @@ ew11:
     password: ${EW11_REBOOT_PASSWORD:}
     interval: ${EW11_REBOOT_INTERVAL:12h}
 
+heating:
+  polling:
+    enabled: ${HEATING_POLLING_ENABLED:true}
+    interval: ${HEATING_POLLING_INTERVAL:5s}
+    device-gap: ${HEATING_POLLING_DEVICE_GAP:100ms}
+
 app:
   packet-log-retention-days: ${PACKET_LOG_RETENTION_DAYS:30}
